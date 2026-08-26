@@ -15,6 +15,28 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
+  int get _passwordStrength {
+    final password = _passwordController.text;
+    var score = 0;
+
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (RegExp(r'[A-Z]').hasMatch(password) &&
+        RegExp(r'[a-z]').hasMatch(password)) {
+      score++;
+    }
+    if (RegExp(r'[0-9!@#$%^&*(),.?":{}|<>]').hasMatch(password)) score++;
+
+    return score;
+  }
+
+  String get _passwordStrengthLabel => switch (_passwordStrength) {
+    0 || 1 => 'Zayıf',
+    2 => 'Orta',
+    3 => 'İyi',
+    _ => 'Güçlü',
+  };
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -104,6 +126,7 @@ class _LoginPageState extends State<LoginPage> {
                             textInputAction: TextInputAction.done,
                             autofillHints: const [AutofillHints.password],
                             validator: _validatePassword,
+                            onChanged: (_) => setState(() {}),
                             onFieldSubmitted: (_) => _submit(),
                             decoration: InputDecoration(
                               labelText: 'Şifre',
@@ -126,6 +149,14 @@ class _LoginPageState extends State<LoginPage> {
                               border: const OutlineInputBorder(),
                             ),
                           ),
+                          if (_passwordController.text.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            _PasswordStrengthIndicator(
+                              strength: _passwordStrength,
+                              label: _passwordStrengthLabel,
+                              colorScheme: colorScheme,
+                            ),
+                          ],
                           Row(
                             children: [
                               Expanded(
@@ -190,6 +221,55 @@ class _LoginPageState extends State<LoginPage> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _PasswordStrengthIndicator extends StatelessWidget {
+  const _PasswordStrengthIndicator({
+    required this.strength,
+    required this.label,
+    required this.colorScheme,
+  });
+
+  final int strength;
+  final String label;
+  final ColorScheme colorScheme;
+
+  Color get _indicatorColor => switch (strength) {
+    0 || 1 => colorScheme.error,
+    2 => Colors.orange.shade700,
+    3 => Colors.lightGreen.shade700,
+    _ => colorScheme.primary,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Şifre gücü: $label',
+      child: Row(
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: strength / 4,
+                minHeight: 6,
+                color: _indicatorColor,
+                backgroundColor: colorScheme.surfaceContainerHighest,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: _indicatorColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
