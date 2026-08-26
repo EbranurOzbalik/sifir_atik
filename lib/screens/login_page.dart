@@ -13,6 +13,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -125,14 +126,30 @@ class _LoginPageState extends State<LoginPage> {
                               border: const OutlineInputBorder(),
                             ),
                           ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // Password reset will be connected later.
-                              },
-                              child: const Text('Şifremi Unuttum?'),
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CheckboxListTile(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  contentPadding: EdgeInsets.zero,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  dense: true,
+                                  title: const Text('Beni Hatırla'),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  // Password reset will be connected later.
+                                },
+                                child: const Text('Şifremi Unuttum?'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           FilledButton(
