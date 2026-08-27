@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'home_page.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -75,8 +77,14 @@ class _LoginPageState extends State<LoginPage> {
     FocusScope.of(context).unfocus();
 
     if (_formKey.currentState?.validate() ?? false) {
-      // Authentication will be connected in a later development phase.
+      _openHomePage();
     }
+  }
+
+  void _openHomePage() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const HomePage()),
+    );
   }
 
   @override

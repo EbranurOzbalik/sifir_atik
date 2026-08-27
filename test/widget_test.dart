@@ -22,4 +22,20 @@ void main() {
 
     expect(find.text('Güçlü'), findsOneWidget);
   });
+
+  testWidgets('valid login opens the initial home screen', (tester) async {
+    await tester.pumpWidget(const SifirAtikApp());
+
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'kullanici@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), 'Guclu123!');
+    await tester.ensureVisible(find.text('Giriş Yap'));
+    await tester.tap(find.text('Giriş Yap'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Atık İlanı Ver'), findsOneWidget);
+    expect(find.text('İlanları Gör'), findsOneWidget);
+  });
 }
