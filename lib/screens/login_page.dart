@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  bool _isLoading = false;
 
   int get _passwordStrength {
     final password = _passwordController.text;
@@ -73,11 +74,22 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_isLoading) return;
+
     FocusScope.of(context).unfocus();
 
-    if (_formKey.currentState?.validate() ?? false) {
-      _openHomePage();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Replace this placeholder with the authentication service call.
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+
+      if (mounted) _openHomePage();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -85,6 +97,10 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
+  }
+
+  void _signInWithGoogle() {
+    // Google Sign-In will be connected when the authentication service is added.
   }
 
   @override
@@ -135,7 +151,9 @@ class _LoginPageState extends State<LoginPage> {
                             autofillHints: const [AutofillHints.password],
                             validator: _validatePassword,
                             onChanged: (_) => setState(() {}),
-                            onFieldSubmitted: (_) => _submit(),
+                            onFieldSubmitted: (_) {
+                              _submit();
+                            },
                             decoration: InputDecoration(
                               labelText: 'Şifre',
                               prefixIcon: const Icon(Icons.lock_outline),
@@ -192,7 +210,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 12),
                           FilledButton(
-                            onPressed: _submit,
+                            onPressed: _isLoading ? null : _submit,
                             style: FilledButton.styleFrom(
                               minimumSize: const Size.fromHeight(54),
                               textStyle: const TextStyle(
@@ -200,7 +218,50 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: const Text('Giriş Yap'),
+                            child: _isLoading
+                                ? const SizedBox.square(
+                                    dimension: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text('Giriş Yap'),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'veya',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithGoogle,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(54),
+                              foregroundColor: colorScheme.onSurface,
+                              side: BorderSide(color: colorScheme.outline),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.g_mobiledata_rounded,
+                              size: 30,
+                            ),
+                            label: const Text('Google ile Giriş Yap'),
                           ),
                           const SizedBox(height: 28),
                           Row(

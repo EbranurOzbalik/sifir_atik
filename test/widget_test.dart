@@ -8,6 +8,7 @@ void main() {
 
     expect(find.text('Sıfır Atık'), findsOneWidget);
     expect(find.text('Giriş Yap'), findsOneWidget);
+    expect(find.text('Google ile Giriş Yap'), findsOneWidget);
     expect(find.text('Beni Hatırla'), findsOneWidget);
     expect(find.text('Şifremi Unuttum?'), findsOneWidget);
     expect(find.byIcon(Icons.recycling), findsOneWidget);
@@ -33,6 +34,14 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), 'Guclu123!');
     await tester.ensureVisible(find.text('Giriş Yap'));
     await tester.tap(find.text('Giriş Yap'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+
     await tester.pumpAndSettle();
 
     expect(find.text('Atık İlanı Ver'), findsOneWidget);
