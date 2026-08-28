@@ -24,5 +24,4 @@ class SifirAtikApp extends StatelessWidget {
   }
 }
 
-// Kept as an alias for compatibility with the default project widget test.
 typedef MyApp = SifirAtikApp;
