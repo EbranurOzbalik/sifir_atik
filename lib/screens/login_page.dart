@@ -88,6 +88,8 @@ class _LoginPageState extends State<LoginPage> {
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
       if (mounted) _openHomePage();
+    } catch (_) {
+      if (mounted) _showLoginError();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -99,8 +101,31 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _signInWithGoogle() {
-    // Google Sign-In will be connected when the authentication service is added.
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Connect the Google/Firebase sign-in call here. If the user cancels,
+      // treat the null result as an error and call _showLoginError().
+      await Future<void>.value();
+    } catch (_) {
+      if (mounted) _showLoginError();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showLoginError() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Giriş sırasında bir hata oluştu.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   @override
