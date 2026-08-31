@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'create_listing_page.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -25,7 +27,11 @@ class HomePage extends StatelessWidget {
               color: colorScheme.primary,
               backgroundColor: colorScheme.primaryContainer,
               onTap: () {
-                // The listing creation flow will be added later.
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CreateListingPage(),
+                  ),
+                );
               },
             );
             final viewListingsCard = _ActionCard(
