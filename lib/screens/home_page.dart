@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'create_listing_page.dart';
+import 'listings_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -41,7 +42,9 @@ class HomePage extends StatelessWidget {
               color: colorScheme.tertiary,
               backgroundColor: colorScheme.tertiaryContainer,
               onTap: () {
-                // The listings screen will be added later.
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const ListingsPage()),
+                );
               },
             );
 

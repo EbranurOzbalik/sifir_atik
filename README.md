@@ -13,6 +13,8 @@ uygulamasıdır.
 - Google ile giriş butonu
 - Giriş sırasında loading durumu ve hata bildirimi
 - Atık ilanı verme ve ilanları görme seçeneklerini sunan ana ekran taslağı
+- Doğrulamalı atık ilanı oluşturma formu
+- Arama ve kategori filtreleri içeren örnek ilan listesi
 
 ## Projeyi çalıştırma
 
@@ -32,6 +34,7 @@ flutter test
 
 ## Proje durumu
 
-Uygulama geliştirme aşamasındadır. İlan oluşturma, ilan listeleme ve Firestore
-entegrasyonu henüz eklenmemiştir. Google ile giriş arayüzü hazırdır; gerçek
-Firebase Authentication bağlantısı sonraki aşamada tamamlanacaktır.
+Uygulama geliştirme aşamasındadır. İlan oluşturma ve listeleme arayüzleri örnek
+verilerle hazırlanmıştır; henüz Firestore'a veri kaydetmez veya gerçek ilanları
+çekmez. Google ile giriş arayüzü hazırdır; gerçek Firebase Authentication
+bağlantısı sonraki aşamada tamamlanacaktır.

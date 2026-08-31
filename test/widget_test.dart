@@ -56,4 +56,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Yeni ilan oluştur'), findsOneWidget);
   });
+
+  testWidgets('home action opens the listings screen', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.text('İlanları Gör'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('İlanlarda ara'), findsOneWidget);
+    expect(find.text('Temiz karton kutular'), findsOneWidget);
+  });
 }
