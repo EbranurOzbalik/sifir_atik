@@ -66,4 +66,23 @@ void main() {
     expect(find.text('İlanlarda ara'), findsOneWidget);
     expect(find.text('Temiz karton kutular'), findsOneWidget);
   });
+
+  testWidgets('listing detail lets users send interest', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.text('İlanları Gör'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Temiz karton kutular'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('İlan Detayı'), findsOneWidget);
+    expect(find.text('10 kg'), findsWidgets);
+    expect(find.text('Açıklama'), findsOneWidget);
+
+    await tester.tap(find.text('İlgileniyorum'));
+    await tester.pump();
+
+    expect(find.text('Talep İletildi'), findsOneWidget);
+    expect(find.text('Talebiniz ilan sahibine iletildi.'), findsOneWidget);
+  });
 }
