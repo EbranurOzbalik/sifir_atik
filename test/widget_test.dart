@@ -12,7 +12,7 @@ void main() {
     expect(find.text('Google ile Giriş Yap'), findsOneWidget);
     expect(find.text('Beni Hatırla'), findsOneWidget);
     expect(find.text('Şifremi Unuttum?'), findsOneWidget);
-    expect(find.byIcon(Icons.recycling), findsOneWidget);
+    expect(find.bySemanticsLabel('Sıfır atık görseli'), findsOneWidget);
   });
 
   testWidgets('password strength updates while typing', (tester) async {

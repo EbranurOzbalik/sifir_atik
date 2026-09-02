@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
@@ -17,6 +18,7 @@ class _ListingsPageState extends State<ListingsPage> {
       amount: '10 kg',
       description:
           'Taşınmadan kalan temiz karton kutular. Katlanmış şekilde teslim edilebilir.',
+      imageAsset: 'assets/images/cardboard_boxes.svg',
       icon: Icons.inventory_2_outlined,
       color: Color(0xFF8D6E63),
     ),
@@ -27,6 +29,7 @@ class _ListingsPageState extends State<ListingsPage> {
       amount: '18 adet',
       description:
           'Etiketleri sökülmüş, yıkanmış kavanoz ve cam şişeler. Geri kullanım için uygundur.',
+      imageAsset: 'assets/images/glass_jars.svg',
       icon: Icons.local_drink_outlined,
       color: Color(0xFF00897B),
     ),
@@ -37,6 +40,7 @@ class _ListingsPageState extends State<ListingsPage> {
       amount: '1 kutu',
       description:
           'Eski cihazlardan ayrılmış kablo, adaptör ve küçük elektronik parçalar.',
+      imageAsset: 'assets/images/electronics_parts.svg',
       icon: Icons.memory_outlined,
       color: Color(0xFF5E35B1),
     ),
@@ -249,7 +253,13 @@ class _ListingCard extends StatelessWidget {
                   color: listing.color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(listing.icon, size: 36, color: listing.color),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: SvgPicture.asset(
+                    listing.imageAsset,
+                    semanticsLabel: listing.title,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -387,7 +397,13 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                       color: listing.color.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(listing.icon, size: 72, color: listing.color),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: SvgPicture.asset(
+                        listing.imageAsset,
+                        semanticsLabel: listing.title,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -483,6 +499,7 @@ class _Listing {
     required this.location,
     required this.amount,
     required this.description,
+    required this.imageAsset,
     required this.icon,
     required this.color,
   });
@@ -492,6 +509,7 @@ class _Listing {
   final String location;
   final String amount;
   final String description;
+  final String imageAsset;
   final IconData icon;
   final Color color;
 }

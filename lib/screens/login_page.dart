@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'home_page.dart';
 
@@ -379,13 +380,16 @@ class _Header extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 88,
-          height: 88,
+          width: 160,
+          height: 126,
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
-            shape: BoxShape.circle,
+            color: colorScheme.primaryContainer.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(28),
           ),
-          child: Icon(Icons.recycling, size: 48, color: colorScheme.primary),
+          child: SvgPicture.asset(
+            'assets/images/zero_waste_hero.svg',
+            semanticsLabel: 'Sıfır atık görseli',
+          ),
         ),
         const SizedBox(height: 20),
         Text(
