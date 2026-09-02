@@ -57,6 +57,34 @@ void main() {
     expect(find.text('Yeni ilan oluştur'), findsOneWidget);
   });
 
+  testWidgets('create listing requires amount and submits draft', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.text('Atık İlanı Ver'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Miktar'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Karton Kutular');
+    await tester.tap(find.text('Kategori'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kağıt').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(1), '10 kg');
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      'Temiz ve katlanmış kutular.',
+    );
+    await tester.enterText(find.byType(TextFormField).at(3), 'Ortahisar');
+    await tester.ensureVisible(find.text('İlanı Oluştur'));
+    await tester.tap(find.text('İlanı Oluştur'));
+    await tester.pump();
+
+    expect(find.text('İlan taslağı hazırlandı.'), findsOneWidget);
+  });
+
   testWidgets('home action opens the listings screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 

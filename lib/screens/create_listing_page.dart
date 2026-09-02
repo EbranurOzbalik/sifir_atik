@@ -19,6 +19,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
 
@@ -27,6 +28,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _amountController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
     super.dispose();
@@ -116,6 +118,18 @@ class _CreateListingPageState extends State<CreateListingPage> {
                       },
                       validator: (value) =>
                           value == null ? 'Lütfen bir kategori seçin.' : null,
+                    ),
+                    const SizedBox(height: 18),
+                    TextFormField(
+                      controller: _amountController,
+                      textInputAction: TextInputAction.next,
+                      validator: _requiredValidator,
+                      decoration: const InputDecoration(
+                        labelText: 'Miktar',
+                        hintText: 'Örn. 10 kg veya 18 adet',
+                        prefixIcon: Icon(Icons.scale_outlined),
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                     const SizedBox(height: 18),
                     TextFormField(
