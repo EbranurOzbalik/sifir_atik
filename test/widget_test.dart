@@ -85,4 +85,24 @@ void main() {
     expect(find.text('Talep İletildi'), findsOneWidget);
     expect(find.text('Talebiniz ilan sahibine iletildi.'), findsOneWidget);
   });
+
+  testWidgets('listings can be searched and filtered', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.text('İlanları Gör'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'cam');
+    await tester.pump();
+
+    expect(find.text('Cam kavanoz ve şişeler'), findsOneWidget);
+    expect(find.text('Temiz karton kutular'), findsNothing);
+
+    await tester.tap(find.byTooltip('Aramayı temizle'));
+    await tester.pump();
+    await tester.tap(find.text('Plastik'));
+    await tester.pump();
+
+    expect(find.text('Uygun ilan bulunamadı.'), findsOneWidget);
+  });
 }

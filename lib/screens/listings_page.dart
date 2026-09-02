@@ -8,6 +8,7 @@ class ListingsPage extends StatefulWidget {
 }
 
 class _ListingsPageState extends State<ListingsPage> {
+  static const _categories = ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik'];
   static const _listings = [
     _Listing(
       title: 'Temiz karton kutular',
@@ -42,6 +43,31 @@ class _ListingsPageState extends State<ListingsPage> {
   ];
 
   final Set<String> _interestedListingTitles = {};
+  final _searchController = TextEditingController();
+
+  String _selectedCategory = 'Tümü';
+
+  List<_Listing> get _filteredListings {
+    final query = _searchController.text.trim().toLowerCase();
+
+    return _listings.where((listing) {
+      final matchesCategory =
+          _selectedCategory == 'Tümü' || listing.category == _selectedCategory;
+      final matchesQuery =
+          query.isEmpty ||
+          listing.title.toLowerCase().contains(query) ||
+          listing.category.toLowerCase().contains(query) ||
+          listing.location.toLowerCase().contains(query);
+
+      return matchesCategory && matchesQuery;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _toggleInterest(_Listing listing) {
     setState(() {
@@ -67,6 +93,8 @@ class _ListingsPageState extends State<ListingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredListings = _filteredListings;
+
     return Scaffold(
       appBar: AppBar(title: const Text('İlanları Gör')),
       body: SafeArea(
@@ -76,11 +104,22 @@ class _ListingsPageState extends State<ListingsPage> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               sliver: SliverToBoxAdapter(
                 child: TextField(
-                  readOnly: true,
+                  controller: _searchController,
+                  textInputAction: TextInputAction.search,
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'İlanlarda ara',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: const Icon(Icons.tune),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? const Icon(Icons.tune)
+                        : IconButton(
+                            tooltip: 'Aramayı temizle',
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.close),
+                          ),
                     filled: true,
                     fillColor: Theme.of(
                       context,
@@ -99,13 +138,15 @@ class _ListingsPageState extends State<ListingsPage> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik']
+                    children: _categories
                         .map(
                           (category) => Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: FilterChip(
-                              selected: category == 'Tümü',
-                              onSelected: (_) {},
+                              selected: category == _selectedCategory,
+                              onSelected: (_) {
+                                setState(() => _selectedCategory = category);
+                              },
                               label: Text(category),
                             ),
                           ),
@@ -117,23 +158,60 @@ class _ListingsPageState extends State<ListingsPage> {
             ),
             SliverPadding(
               padding: const EdgeInsets.all(20),
-              sliver: SliverList.separated(
-                itemCount: _listings.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final listing = _listings[index];
-                  return _ListingCard(
-                    listing: listing,
-                    isInterested: _interestedListingTitles.contains(
-                      listing.title,
+              sliver: filteredListings.isEmpty
+                  ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
+                  : SliverList.separated(
+                      itemCount: filteredListings.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final listing = filteredListings[index];
+                        return _ListingCard(
+                          listing: listing,
+                          isInterested: _interestedListingTitles.contains(
+                            listing.title,
+                          ),
+                          onTap: () => _openListingDetail(listing),
+                        );
+                      },
                     ),
-                    onTap: () => _openListingDetail(listing),
-                  );
-                },
-              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmptyListingsMessage extends StatelessWidget {
+  const _EmptyListingsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_outlined,
+            size: 48,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Uygun ilan bulunamadı.',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Arama veya kategori filtresini değiştirmeyi deneyin.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
+          ),
+        ],
       ),
     );
   }
