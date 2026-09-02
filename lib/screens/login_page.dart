@@ -142,7 +142,9 @@ class _LoginPageState extends State<LoginPage> {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 40,
+                  minHeight: constraints.maxHeight > 40
+                      ? constraints.maxHeight - 40
+                      : 0,
                 ),
                 child: Center(
                   child: ConstrainedBox(
