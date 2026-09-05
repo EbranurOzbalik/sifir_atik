@@ -111,6 +111,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Talep İletildi'), findsOneWidget);
+    expect(find.text('Talep durumu: Beklemede'), findsOneWidget);
     expect(find.text('Talebiniz ilan sahibine iletildi.'), findsOneWidget);
   });
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_request.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
@@ -12,7 +13,7 @@ class ListingsPage extends StatefulWidget {
 class _ListingsPageState extends State<ListingsPage> {
   static const _categories = ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik'];
 
-  final Set<String> _interestedListingIds = {};
+  final Map<String, ListingRequest> _requestsByListingId = {};
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'Tümü';
@@ -41,10 +42,16 @@ class _ListingsPageState extends State<ListingsPage> {
 
   void _toggleInterest(Listing listing) {
     setState(() {
-      if (_interestedListingIds.contains(listing.id)) {
-        _interestedListingIds.remove(listing.id);
+      if (_requestsByListingId.containsKey(listing.id)) {
+        _requestsByListingId.remove(listing.id);
       } else {
-        _interestedListingIds.add(listing.id);
+        _requestsByListingId[listing.id] = ListingRequest(
+          id: 'request-${listing.id}',
+          listingId: listing.id,
+          requesterName: 'Ebranur',
+          status: ListingRequestStatus.pending,
+          createdAt: DateTime.now(),
+        );
       }
     });
   }
@@ -54,7 +61,7 @@ class _ListingsPageState extends State<ListingsPage> {
       MaterialPageRoute<void>(
         builder: (_) => _ListingDetailPage(
           listing: listing,
-          isInterested: _interestedListingIds.contains(listing.id),
+          request: _requestsByListingId[listing.id],
           onInterestChanged: () => _toggleInterest(listing),
         ),
       ),
@@ -137,9 +144,7 @@ class _ListingsPageState extends State<ListingsPage> {
                         final listing = filteredListings[index];
                         return _ListingCard(
                           listing: listing,
-                          isInterested: _interestedListingIds.contains(
-                            listing.id,
-                          ),
+                          request: _requestsByListingId[listing.id],
                           onTap: () => _openListingDetail(listing),
                         );
                       },
@@ -190,12 +195,12 @@ class _EmptyListingsMessage extends StatelessWidget {
 class _ListingCard extends StatelessWidget {
   const _ListingCard({
     required this.listing,
-    required this.isInterested,
+    required this.request,
     required this.onTap,
   });
 
   final Listing listing;
-  final bool isInterested;
+  final ListingRequest? request;
   final VoidCallback onTap;
 
   @override
@@ -283,10 +288,10 @@ class _ListingCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (isInterested) ...[
+                    if (request != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'İlginiz iletildi',
+                        'Talebiniz beklemede',
                         style: TextStyle(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w700,
@@ -308,12 +313,12 @@ class _ListingCard extends StatelessWidget {
 class _ListingDetailPage extends StatefulWidget {
   const _ListingDetailPage({
     required this.listing,
-    required this.isInterested,
+    required this.request,
     required this.onInterestChanged,
   });
 
   final Listing listing;
-  final bool isInterested;
+  final ListingRequest? request;
   final VoidCallback onInterestChanged;
 
   @override
@@ -321,18 +326,30 @@ class _ListingDetailPage extends StatefulWidget {
 }
 
 class _ListingDetailPageState extends State<_ListingDetailPage> {
-  late bool _isInterested = widget.isInterested;
+  late ListingRequest? _request = widget.request;
 
   void _toggleInterest() {
     widget.onInterestChanged();
-    setState(() => _isInterested = !_isInterested);
+    setState(() {
+      if (_request == null) {
+        _request = ListingRequest(
+          id: 'request-${widget.listing.id}',
+          listingId: widget.listing.id,
+          requesterName: 'Ebranur',
+          status: ListingRequestStatus.pending,
+          createdAt: DateTime.now(),
+        );
+      } else {
+        _request = null;
+      }
+    });
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(
-            _isInterested
+            _request != null
                 ? 'Talebiniz ilan sahibine iletildi.'
                 : 'Talebiniz geri alındı.',
           ),
@@ -417,27 +434,64 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                     ).textTheme.bodyLarge?.copyWith(height: 1.45),
                   ),
                   const SizedBox(height: 32),
+                  if (_request != null) ...[
+                    _RequestStatusCard(request: _request!),
+                    const SizedBox(height: 16),
+                  ],
                   FilledButton.icon(
                     onPressed: _toggleInterest,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(54),
-                      backgroundColor: _isInterested
+                      backgroundColor: _request != null
                           ? colorScheme.secondary
                           : colorScheme.primary,
                     ),
                     icon: Icon(
-                      _isInterested
+                      _request != null
                           ? Icons.check_circle_outline
                           : Icons.volunteer_activism_outlined,
                     ),
                     label: Text(
-                      _isInterested ? 'Talep İletildi' : 'İlgileniyorum',
+                      _request != null ? 'Talep İletildi' : 'İlgileniyorum',
                     ),
                   ),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RequestStatusCard extends StatelessWidget {
+  const _RequestStatusCard({required this.request});
+
+  final ListingRequest request;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      elevation: 0,
+      color: colorScheme.secondaryContainer.withValues(alpha: 0.45),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.hourglass_top_outlined, color: colorScheme.secondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Talep durumu: Beklemede',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
         ),
       ),
     );
