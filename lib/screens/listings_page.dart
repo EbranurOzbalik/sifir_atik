@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sifir_atik/models/listing.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
@@ -10,51 +11,16 @@ class ListingsPage extends StatefulWidget {
 
 class _ListingsPageState extends State<ListingsPage> {
   static const _categories = ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik'];
-  static const _listings = [
-    _Listing(
-      title: 'Temiz karton kutular',
-      category: 'Kağıt',
-      location: 'Kadıköy, İstanbul',
-      amount: '10 kg',
-      description:
-          'Taşınmadan kalan temiz karton kutular. Katlanmış şekilde teslim edilebilir.',
-      imageAsset: 'assets/images/cardboard_boxes.svg',
-      icon: Icons.inventory_2_outlined,
-      color: Color(0xFF8D6E63),
-    ),
-    _Listing(
-      title: 'Cam kavanoz ve şişeler',
-      category: 'Cam',
-      location: 'Üsküdar, İstanbul',
-      amount: '18 adet',
-      description:
-          'Etiketleri sökülmüş, yıkanmış kavanoz ve cam şişeler. Geri kullanım için uygundur.',
-      imageAsset: 'assets/images/glass_jars.svg',
-      icon: Icons.local_drink_outlined,
-      color: Color(0xFF00897B),
-    ),
-    _Listing(
-      title: 'Kullanılabilir elektronik parçalar',
-      category: 'Elektronik',
-      location: 'Ataşehir, İstanbul',
-      amount: '1 kutu',
-      description:
-          'Eski cihazlardan ayrılmış kablo, adaptör ve küçük elektronik parçalar.',
-      imageAsset: 'assets/images/electronics_parts.svg',
-      icon: Icons.memory_outlined,
-      color: Color(0xFF5E35B1),
-    ),
-  ];
 
-  final Set<String> _interestedListingTitles = {};
+  final Set<String> _interestedListingIds = {};
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'Tümü';
 
-  List<_Listing> get _filteredListings {
+  List<Listing> get _filteredListings {
     final query = _searchController.text.trim().toLowerCase();
 
-    return _listings.where((listing) {
+    return sampleListings.where((listing) {
       final matchesCategory =
           _selectedCategory == 'Tümü' || listing.category == _selectedCategory;
       final matchesQuery =
@@ -73,22 +39,22 @@ class _ListingsPageState extends State<ListingsPage> {
     super.dispose();
   }
 
-  void _toggleInterest(_Listing listing) {
+  void _toggleInterest(Listing listing) {
     setState(() {
-      if (_interestedListingTitles.contains(listing.title)) {
-        _interestedListingTitles.remove(listing.title);
+      if (_interestedListingIds.contains(listing.id)) {
+        _interestedListingIds.remove(listing.id);
       } else {
-        _interestedListingTitles.add(listing.title);
+        _interestedListingIds.add(listing.id);
       }
     });
   }
 
-  void _openListingDetail(_Listing listing) {
+  void _openListingDetail(Listing listing) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => _ListingDetailPage(
           listing: listing,
-          isInterested: _interestedListingTitles.contains(listing.title),
+          isInterested: _interestedListingIds.contains(listing.id),
           onInterestChanged: () => _toggleInterest(listing),
         ),
       ),
@@ -171,8 +137,8 @@ class _ListingsPageState extends State<ListingsPage> {
                         final listing = filteredListings[index];
                         return _ListingCard(
                           listing: listing,
-                          isInterested: _interestedListingTitles.contains(
-                            listing.title,
+                          isInterested: _interestedListingIds.contains(
+                            listing.id,
                           ),
                           onTap: () => _openListingDetail(listing),
                         );
@@ -228,7 +194,7 @@ class _ListingCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final _Listing listing;
+  final Listing listing;
   final bool isInterested;
   final VoidCallback onTap;
 
@@ -250,7 +216,7 @@ class _ListingCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: listing.color.withValues(alpha: 0.14),
+                  color: _listingColor(listing).withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Padding(
@@ -346,7 +312,7 @@ class _ListingDetailPage extends StatefulWidget {
     required this.onInterestChanged,
   });
 
-  final _Listing listing;
+  final Listing listing;
   final bool isInterested;
   final VoidCallback onInterestChanged;
 
@@ -394,7 +360,7 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                   Container(
                     height: 180,
                     decoration: BoxDecoration(
-                      color: listing.color.withValues(alpha: 0.14),
+                      color: _listingColor(listing).withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Padding(
@@ -413,6 +379,11 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  Text(
+                    '${listing.ownerName} tarafından paylaşıldı',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 16),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -492,24 +463,15 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _Listing {
-  const _Listing({
-    required this.title,
-    required this.category,
-    required this.location,
-    required this.amount,
-    required this.description,
-    required this.imageAsset,
-    required this.icon,
-    required this.color,
-  });
-
-  final String title;
-  final String category;
-  final String location;
-  final String amount;
-  final String description;
-  final String imageAsset;
-  final IconData icon;
-  final Color color;
+Color _listingColor(Listing listing) {
+  switch (listing.category) {
+    case 'Kağıt':
+      return const Color(0xFF8D6E63);
+    case 'Cam':
+      return const Color(0xFF00897B);
+    case 'Elektronik':
+      return const Color(0xFF5E35B1);
+    default:
+      return const Color(0xFF2E7D32);
+  }
 }
