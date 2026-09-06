@@ -12,7 +12,20 @@
           "package_name": "com.example.sifir_atik"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "785812597526-k2sprrnepltt0rqu1rv1d9ufvg4pkkhu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.sifir_atik",
+            "certificate_hash": "55871de3feefc177b54e1827478241fd133391b9"
+          }
+        },
+        {
+          "client_id": "785812597526-uutfsod3rgqsnnv0i25s4one5hfc4n6f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCtgPaxoahZbqF3ikRuC0c1V_7SvYuyAfw"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "785812597526-uutfsod3rgqsnnv0i25s4one5hfc4n6f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "785812597526-isorej3bv13sr8dt8h5r4dcogr13m2af.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.sifirAtik"
+              }
+            }
+          ]
         }
       }
     }
