@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sifir_atik/services/auth_service.dart';
 
 import 'home_page.dart';
 
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -85,12 +87,16 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Replace this placeholder with the authentication service call.
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await _authService.signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (mounted) _openHomePage();
+    } on AuthServiceException catch (error) {
+      if (mounted) _showMessage(error.message);
     } catch (_) {
-      if (mounted) _showLoginError();
+      if (mounted) _showMessage('Giriş sırasında bir hata oluştu.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -108,24 +114,74 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await _authService.signInWithGoogle();
 
       if (mounted) _openHomePage();
+    } on AuthServiceException catch (error) {
+      if (mounted) _showMessage(error.message);
     } catch (_) {
-      if (mounted) _showLoginError();
+      if (mounted) _showMessage('Google ile giriş sırasında bir hata oluştu.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showLoginError() {
+  Future<void> _registerWithEmail() async {
+    if (_isLoading) return;
+
+    FocusScope.of(context).unfocus();
+
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.registerWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (mounted) _openHomePage();
+    } on AuthServiceException catch (error) {
+      if (mounted) _showMessage(error.message);
+    } catch (_) {
+      if (mounted) _showMessage('Kayıt sırasında bir hata oluştu.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _sendPasswordResetEmail() async {
+    if (_isLoading) return;
+
+    final emailError = _validateEmail(_emailController.text);
+    if (emailError != null) {
+      _showMessage('Önce geçerli bir e-posta adresi yazın.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.sendPasswordResetEmail(_emailController.text.trim());
+
+      if (mounted) {
+        _showMessage('Şifre sıfırlama e-postası gönderildi.');
+      }
+    } on AuthServiceException catch (error) {
+      if (mounted) _showMessage(error.message);
+    } catch (_) {
+      if (mounted) _showMessage('Şifre sıfırlama sırasında bir hata oluştu.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('Giriş sırasında bir hata oluştu.'),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
   }
 
@@ -229,9 +285,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  // Password reset will be connected later.
-                                },
+                                onPressed: _isLoading
+                                    ? null
+                                    : _sendPasswordResetEmail,
                                 child: const Text('Şifremi Unuttum?'),
                               ),
                             ],
@@ -302,9 +358,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  // Registration will be connected later.
-                                },
+                                onPressed: _isLoading
+                                    ? null
+                                    : _registerWithEmail,
                                 child: const Text('Kayıt Ol'),
                               ),
                             ],

@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
@@ -50,10 +52,14 @@ class _ListingsPageState extends State<ListingsPage> {
       if (_requestsByListingId.containsKey(listing.id)) {
         _requestsByListingId.remove(listing.id);
       } else {
+        final user = Firebase.apps.isNotEmpty
+            ? FirebaseAuth.instance.currentUser
+            : null;
         newRequest = ListingRequest(
           id: 'request-${listing.id}',
           listingId: listing.id,
-          requesterName: 'Ebranur',
+          requesterId: user?.uid ?? 'local-user',
+          requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
           status: ListingRequestStatus.pending,
           createdAt: DateTime.now(),
         );
@@ -354,10 +360,14 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
     widget.onInterestChanged();
     setState(() {
       if (_request == null) {
+        final user = Firebase.apps.isNotEmpty
+            ? FirebaseAuth.instance.currentUser
+            : null;
         _request = ListingRequest(
           id: 'request-${widget.listing.id}',
           listingId: widget.listing.id,
-          requesterName: 'Ebranur',
+          requesterId: user?.uid ?? 'local-user',
+          requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
           status: ListingRequestStatus.pending,
           createdAt: DateTime.now(),
         );

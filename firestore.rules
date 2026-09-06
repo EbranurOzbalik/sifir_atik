@@ -3,12 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /listings/{listingId} {
-      allow read, create: if true;
-      allow update, delete: if false;
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && request.auth.uid == resource.data.ownerId;
     }
 
     match /listingRequests/{requestId} {
-      allow read, create: if true;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
       allow update, delete: if false;
     }
   }

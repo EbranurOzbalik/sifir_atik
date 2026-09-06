@@ -8,6 +8,7 @@ class Listing {
     required this.location,
     required this.amount,
     required this.description,
+    required this.ownerId,
     required this.ownerName,
     required this.createdAt,
     required this.imageAsset,
@@ -19,6 +20,7 @@ class Listing {
   final String location;
   final String amount;
   final String description;
+  final String ownerId;
   final String ownerName;
   final DateTime createdAt;
   final String imageAsset;
@@ -34,6 +36,7 @@ class Listing {
       location: data['location'] as String? ?? '',
       amount: data['amount'] as String? ?? '',
       description: data['description'] as String? ?? '',
+      ownerId: data['ownerId'] as String? ?? '',
       ownerName: data['ownerName'] as String? ?? 'İlan sahibi',
       createdAt: createdAtValue is Timestamp
           ? createdAtValue.toDate()
@@ -50,6 +53,7 @@ class Listing {
       'location': location,
       'amount': amount,
       'description': description,
+      'ownerId': ownerId,
       'ownerName': ownerName,
       'createdAt': Timestamp.fromDate(createdAt),
       'imageAsset': imageAsset,
@@ -79,6 +83,7 @@ final sampleListings = [
     amount: '10 kg',
     description:
         'Taşınmadan kalan temiz karton kutular. Katlanmış şekilde teslim edilebilir.',
+    ownerId: 'sample-user-ebranur',
     ownerName: 'Ebranur',
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/cardboard_boxes.svg',
@@ -91,6 +96,7 @@ final sampleListings = [
     amount: '18 adet',
     description:
         'Etiketleri sökülmüş, yıkanmış kavanoz ve cam şişeler. Geri kullanım için uygundur.',
+    ownerId: 'sample-user-zeynep',
     ownerName: 'Zeynep',
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/glass_jars.svg',
@@ -103,6 +109,7 @@ final sampleListings = [
     amount: '1 kutu',
     description:
         'Eski cihazlardan ayrılmış kablo, adaptör ve küçük elektronik parçalar.',
+    ownerId: 'sample-user-mert',
     ownerName: 'Mert',
     createdAt: DateTime(2026, 9, 2),
     imageAsset: 'assets/images/electronics_parts.svg',

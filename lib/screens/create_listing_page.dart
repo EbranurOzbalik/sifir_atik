@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
@@ -52,6 +54,9 @@ class _CreateListingPageState extends State<CreateListingPage> {
     setState(() => _isSaving = true);
 
     final now = DateTime.now();
+    final user = Firebase.apps.isNotEmpty
+        ? FirebaseAuth.instance.currentUser
+        : null;
     final listing = Listing(
       id: 'draft-${now.millisecondsSinceEpoch}',
       title: _titleController.text.trim(),
@@ -59,7 +64,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
       location: _locationController.text.trim(),
       amount: _amountController.text.trim(),
       description: _descriptionController.text.trim(),
-      ownerName: 'Ebranur',
+      ownerId: user?.uid ?? 'local-user',
+      ownerName: user?.displayName ?? user?.email ?? 'Ebranur',
       createdAt: now,
       imageAsset: listingImageForCategory(_selectedCategory!),
     );
@@ -73,8 +79,10 @@ class _CreateListingPageState extends State<CreateListingPage> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('İlan kaydedildi.'),
+        SnackBar(
+          content: Text(
+            isSaved ? 'İlan kaydedildi.' : 'İlan taslak olarak kaldı.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );

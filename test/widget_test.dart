@@ -25,7 +25,9 @@ void main() {
     expect(find.text('Güçlü'), findsOneWidget);
   });
 
-  testWidgets('valid login opens the initial home screen', (tester) async {
+  testWidgets('login shows firebase warning when auth is not ready', (
+    tester,
+  ) async {
     await tester.pumpWidget(const SifirAtikApp());
 
     await tester.enterText(
@@ -35,18 +37,9 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), 'Guclu123!');
     await tester.ensureVisible(find.text('Giriş Yap'));
     await tester.tap(find.text('Giriş Yap'));
-    await tester.pump();
-
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
-    );
-
     await tester.pumpAndSettle();
 
-    expect(find.text('Atık İlanı Ver'), findsOneWidget);
-    expect(find.text('İlanları Gör'), findsOneWidget);
+    expect(find.text('Firebase bağlantısı hazır değil.'), findsOneWidget);
   });
 
   testWidgets('home action opens the create listing screen', (tester) async {
@@ -82,7 +75,7 @@ void main() {
     await tester.tap(find.text('İlanı Oluştur'));
     await tester.pump();
 
-    expect(find.text('İlan kaydedildi.'), findsOneWidget);
+    expect(find.text('İlan taslak olarak kaldı.'), findsOneWidget);
   });
 
   testWidgets('home action opens the listings screen', (tester) async {

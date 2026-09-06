@@ -21,10 +21,10 @@ tasarımı, SVG görsel kullanımı ve widget testleri üzerine çalıştım.
 ## Uygulamada Neler Var?
 
 - Material 3 uyumlu, responsive giriş ekranı
-- E-posta ve şifre alanları için form kontrolü
+- Firebase Authentication ile e-posta/şifre girişi ve kayıt olma
 - Şifre görünürlüğü ve şifre güç göstergesi
 - Beni hatırla seçeneği
-- Google ile giriş butonu
+- Google ile giriş akışı
 - Giriş sırasında loading durumu ve hata bildirimi
 - Atık ilanı verme ve ilanları görme seçeneklerini sunan ana ekran taslağı
 - Doğrulamalı atık ilanı oluşturma formu
@@ -70,7 +70,9 @@ flutter test
 Uygulama şu anda geliştirme aşamasındadır. İlan oluşturma, ilan listeleme ve
 talep gönderme akışlarını Firebase Firestore bağlantısına hazırladım. Firestore
 boş olduğunda ekranda örnek ilanlar görünmeye devam eder; yeni ilanlar ve
-talepler ise Firebase bağlantısı varsa ilgili koleksiyonlara kaydedilir.
+talepler ise giriş yapan kullanıcı üzerinden ilgili koleksiyonlara kaydedilir.
 
-E-posta/şifre ve Google ile giriş alanları arayüzde yer almaktadır. Gerçek
-Firebase Authentication bağlantısı projenin sonraki aşamasında tamamlanacaktır.
+E-posta/şifre, kayıt olma, şifre sıfırlama ve Google ile giriş işlemlerini
+Firebase Authentication servisine bağladım. Bu akışların çalışması için Firebase
+Console üzerinden Email/Password ve Google giriş sağlayıcılarının açık olması
+gerekir.
