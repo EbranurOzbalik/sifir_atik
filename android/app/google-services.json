@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "785812597526",
+    "project_id": "sifir-atik-46bd0",
+    "storage_bucket": "sifir-atik-46bd0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:785812597526:android:5aea8703167665ca54be37",
+        "android_client_info": {
+          "package_name": "com.example.sifir_atik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtgPaxoahZbqF3ikRuC0c1V_7SvYuyAfw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
