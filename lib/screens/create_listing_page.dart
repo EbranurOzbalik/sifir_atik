@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/services/listing_repository.dart';
 
 class CreateListingPage extends StatefulWidget {
   const CreateListingPage({super.key});
@@ -22,8 +24,10 @@ class _CreateListingPageState extends State<CreateListingPage> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  final _listingRepository = const ListingRepository();
 
   String? _selectedCategory;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -41,18 +45,50 @@ class _CreateListingPageState extends State<CreateListingPage> {
     return null;
   }
 
-  void _submitDraft() {
+  Future<void> _submitDraft() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isSaving = true);
+
+    final now = DateTime.now();
+    final listing = Listing(
+      id: 'draft-${now.millisecondsSinceEpoch}',
+      title: _titleController.text.trim(),
+      category: _selectedCategory!,
+      location: _locationController.text.trim(),
+      amount: _amountController.text.trim(),
+      description: _descriptionController.text.trim(),
+      ownerName: 'Ebranur',
+      createdAt: now,
+      imageAsset: listingImageForCategory(_selectedCategory!),
+    );
+
+    final isSaved = await _listingRepository.addListing(listing);
+
+    if (!mounted) return;
+
+    setState(() => _isSaving = false);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         const SnackBar(
-          content: Text('İlan taslağı hazırlandı.'),
+          content: Text('İlan kaydedildi.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
+
+    if (!isSaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Database bağlantısı yoksa ilan örnek veri olarak kalır.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -158,12 +194,19 @@ class _CreateListingPageState extends State<CreateListingPage> {
                     ),
                     const SizedBox(height: 28),
                     FilledButton.icon(
-                      onPressed: _submitDraft,
+                      onPressed: _isSaving ? null : _submitDraft,
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(54),
                       ),
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('İlanı Oluştur'),
+                      icon: _isSaving
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_outline),
+                      label: Text(
+                        _isSaving ? 'Kaydediliyor...' : 'İlanı Oluştur',
+                      ),
                     ),
                   ],
                 ),

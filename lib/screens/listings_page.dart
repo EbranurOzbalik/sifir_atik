@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
+import 'package:sifir_atik/services/listing_repository.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
@@ -15,13 +16,15 @@ class _ListingsPageState extends State<ListingsPage> {
 
   final Map<String, ListingRequest> _requestsByListingId = {};
   final _searchController = TextEditingController();
+  final _listingRepository = const ListingRepository();
 
   String _selectedCategory = 'Tümü';
+  List<Listing> _listings = sampleListings;
 
   List<Listing> get _filteredListings {
     final query = _searchController.text.trim().toLowerCase();
 
-    return sampleListings.where((listing) {
+    return _listings.where((listing) {
       final matchesCategory =
           _selectedCategory == 'Tümü' || listing.category == _selectedCategory;
       final matchesQuery =
@@ -41,19 +44,26 @@ class _ListingsPageState extends State<ListingsPage> {
   }
 
   void _toggleInterest(Listing listing) {
+    ListingRequest? newRequest;
+
     setState(() {
       if (_requestsByListingId.containsKey(listing.id)) {
         _requestsByListingId.remove(listing.id);
       } else {
-        _requestsByListingId[listing.id] = ListingRequest(
+        newRequest = ListingRequest(
           id: 'request-${listing.id}',
           listingId: listing.id,
           requesterName: 'Ebranur',
           status: ListingRequestStatus.pending,
           createdAt: DateTime.now(),
         );
+        _requestsByListingId[listing.id] = newRequest!;
       }
     });
+
+    if (newRequest != null) {
+      _listingRepository.addRequest(newRequest!);
+    }
   }
 
   void _openListingDetail(Listing listing) {
@@ -70,87 +80,99 @@ class _ListingsPageState extends State<ListingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredListings = _filteredListings;
-
     return Scaffold(
       appBar: AppBar(title: const Text('İlanları Gör')),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              sliver: SliverToBoxAdapter(
-                child: TextField(
-                  controller: _searchController,
-                  textInputAction: TextInputAction.search,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'İlanlarda ara',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isEmpty
-                        ? const Icon(Icons.tune)
-                        : IconButton(
-                            tooltip: 'Aramayı temizle',
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                            icon: const Icon(Icons.close),
-                          ),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+        child: StreamBuilder<List<Listing>>(
+          stream: _listingRepository.watchListings(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              _listings = snapshot.data!;
+            }
+
+            final filteredListings = _filteredListings;
+
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  sliver: SliverToBoxAdapter(
+                    child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'İlanlarda ara',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? const Icon(Icons.tune)
+                            : IconButton(
+                                tooltip: 'Aramayı temizle',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                                icon: const Icon(Icons.close),
+                              ),
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverToBoxAdapter(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _categories
-                        .map(
-                          (category) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              selected: category == _selectedCategory,
-                              onSelected: (_) {
-                                setState(() => _selectedCategory = category);
-                              },
-                              label: Text(category),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverToBoxAdapter(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _categories
+                            .map(
+                              (category) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: FilterChip(
+                                  selected: category == _selectedCategory,
+                                  onSelected: (_) {
+                                    setState(
+                                      () => _selectedCategory = category,
+                                    );
+                                  },
+                                  label: Text(category),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.all(20),
-              sliver: filteredListings.isEmpty
-                  ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
-                  : SliverList.separated(
-                      itemCount: filteredListings.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final listing = filteredListings[index];
-                        return _ListingCard(
-                          listing: listing,
-                          request: _requestsByListingId[listing.id],
-                          onTap: () => _openListingDetail(listing),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                SliverPadding(
+                  padding: const EdgeInsets.all(20),
+                  sliver: filteredListings.isEmpty
+                      ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
+                      : SliverList.separated(
+                          itemCount: filteredListings.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final listing = filteredListings[index];
+                            return _ListingCard(
+                              listing: listing,
+                              request: _requestsByListingId[listing.id],
+                              onTap: () => _openListingDetail(listing),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

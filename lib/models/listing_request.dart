@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum ListingRequestStatus { pending, accepted, rejected }
 
 class ListingRequest {
@@ -23,5 +25,14 @@ class ListingRequest {
       status: status ?? this.status,
       createdAt: createdAt,
     );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'listingId': listingId,
+      'requesterName': requesterName,
+      'status': status.name,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
   }
 }

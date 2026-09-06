@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Listing {
   const Listing({
     required this.id,
@@ -20,6 +22,52 @@ class Listing {
   final String ownerName;
   final DateTime createdAt;
   final String imageAsset;
+
+  factory Listing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    final createdAtValue = data['createdAt'];
+
+    return Listing(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      category: data['category'] as String? ?? 'Diğer',
+      location: data['location'] as String? ?? '',
+      amount: data['amount'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      ownerName: data['ownerName'] as String? ?? 'İlan sahibi',
+      createdAt: createdAtValue is Timestamp
+          ? createdAtValue.toDate()
+          : DateTime.now(),
+      imageAsset:
+          data['imageAsset'] as String? ?? listingImageForCategory('Diğer'),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'category': category,
+      'location': location,
+      'amount': amount,
+      'description': description,
+      'ownerName': ownerName,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'imageAsset': imageAsset,
+    };
+  }
+}
+
+String listingImageForCategory(String category) {
+  switch (category) {
+    case 'Kağıt':
+      return 'assets/images/cardboard_boxes.svg';
+    case 'Cam':
+      return 'assets/images/glass_jars.svg';
+    case 'Elektronik':
+      return 'assets/images/electronics_parts.svg';
+    default:
+      return 'assets/images/zero_waste_hero.svg';
+  }
 }
 
 final sampleListings = [

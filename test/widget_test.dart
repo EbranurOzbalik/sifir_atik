@@ -82,7 +82,7 @@ void main() {
     await tester.tap(find.text('İlanı Oluştur'));
     await tester.pump();
 
-    expect(find.text('İlan taslağı hazırlandı.'), findsOneWidget);
+    expect(find.text('İlan kaydedildi.'), findsOneWidget);
   });
 
   testWidgets('home action opens the listings screen', (tester) async {

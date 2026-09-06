@@ -67,10 +67,10 @@ flutter test
 
 ## Proje durumu
 
-Uygulama şu anda geliştirme aşamasındadır. Giriş, ilan oluşturma, ilan
-listeleme, filtreleme ve talep gönderme akışları arayüz seviyesinde
-hazırlanmıştır. Veriler şimdilik örnek olarak tutulmaktadır; henüz Firestore'a
-kaydedilmez veya gerçek bir veritabanından çekilmez.
+Uygulama şu anda geliştirme aşamasındadır. İlan oluşturma, ilan listeleme ve
+talep gönderme akışlarını Firebase Firestore bağlantısına hazırladım. Firestore
+boş olduğunda ekranda örnek ilanlar görünmeye devam eder; yeni ilanlar ve
+talepler ise Firebase bağlantısı varsa ilgili koleksiyonlara kaydedilir.
 
 E-posta/şifre ve Google ile giriş alanları arayüzde yer almaktadır. Gerçek
 Firebase Authentication bağlantısı projenin sonraki aşamasında tamamlanacaktır.
