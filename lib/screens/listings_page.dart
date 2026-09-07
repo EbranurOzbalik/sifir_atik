@@ -6,6 +6,8 @@ import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 
+typedef InterestChangedCallback = Future<ListingRequest?> Function();
+
 class ListingsPage extends StatefulWidget {
   const ListingsPage({super.key});
 
@@ -17,6 +19,7 @@ class _ListingsPageState extends State<ListingsPage> {
   static const _categories = ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik'];
 
   final Map<String, ListingRequest> _requestsByListingId = {};
+  final Set<String> _savingRequestListingIds = {};
   final _searchController = TextEditingController();
   final _listingRepository = const ListingRepository();
 
@@ -70,24 +73,72 @@ class _ListingsPageState extends State<ListingsPage> {
     );
   }
 
-  void _toggleInterest(Listing listing) {
-    ListingRequest? newRequest;
-    ListingRequest? removedRequest;
+  Future<ListingRequest?> _toggleInterest(Listing listing) async {
+    if (_savingRequestListingIds.contains(listing.id)) {
+      return _requestsByListingId[listing.id];
+    }
+
+    final currentRequest = _requestsByListingId[listing.id];
+    final isSendingRequest = currentRequest == null;
+    final user = Firebase.apps.isNotEmpty
+        ? FirebaseAuth.instance.currentUser
+        : null;
+
+    if (Firebase.apps.isNotEmpty && user == null) {
+      _showRequestMessage('Talep göndermek için giriş yapmalısınız.');
+      return currentRequest;
+    }
+
+    if (Firebase.apps.isNotEmpty &&
+        listing.ownerId.startsWith('sample-user-')) {
+      _showRequestMessage(
+        'Bu örnek ilana talep gönderilemiyor. Önce gerçek bir ilan oluşturun.',
+      );
+      return currentRequest;
+    }
+
+    setState(() => _savingRequestListingIds.add(listing.id));
+
+    final nextRequest = isSendingRequest ? _requestForListing(listing) : null;
+    final isSaved = isSendingRequest
+        ? await _listingRepository.addRequest(nextRequest!)
+        : await _listingRepository.deleteRequest(currentRequest.id);
+
+    if (!mounted) return currentRequest;
 
     setState(() {
-      if (_requestsByListingId.containsKey(listing.id)) {
-        removedRequest = _requestsByListingId.remove(listing.id);
-      } else {
-        newRequest = _requestForListing(listing);
-        _requestsByListingId[listing.id] = newRequest!;
+      _savingRequestListingIds.remove(listing.id);
+      if (isSaved && nextRequest != null) {
+        _requestsByListingId[listing.id] = nextRequest;
+      } else if (isSaved) {
+        _requestsByListingId.remove(listing.id);
       }
     });
 
-    if (newRequest != null) {
-      _listingRepository.addRequest(newRequest!);
-    } else if (removedRequest != null) {
-      _listingRepository.deleteRequest(removedRequest!.id);
+    if (!isSaved) {
+      _showRequestMessage(
+        isSendingRequest
+            ? 'Talep şu anda gönderilemedi.'
+            : 'Talep şu anda geri alınamadı.',
+      );
+      return currentRequest;
     }
+
+    _showRequestMessage(
+      isSendingRequest
+          ? 'Talebiniz ilan sahibine iletildi.'
+          : 'Talebiniz geri alındı.',
+    );
+
+    return nextRequest;
+  }
+
+  void _showRequestMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
   }
 
   void _openListingDetail(Listing listing) {
@@ -302,9 +353,15 @@ class _ListingCard extends StatelessWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          listing.amount,
-                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        Expanded(
+                          child: Text(
+                            listing.amount,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -359,7 +416,7 @@ class _ListingDetailPage extends StatefulWidget {
 
   final Listing listing;
   final ListingRequest? request;
-  final VoidCallback onInterestChanged;
+  final InterestChangedCallback onInterestChanged;
 
   @override
   State<_ListingDetailPage> createState() => _ListingDetailPageState();
@@ -367,49 +424,19 @@ class _ListingDetailPage extends StatefulWidget {
 
 class _ListingDetailPageState extends State<_ListingDetailPage> {
   late ListingRequest? _request = widget.request;
+  bool _isChangingRequest = false;
 
-  ListingRequest _requestForListing() {
-    final user = Firebase.apps.isNotEmpty
-        ? FirebaseAuth.instance.currentUser
-        : null;
-    final requesterId = user?.uid ?? 'local-user';
+  Future<void> _toggleInterest() async {
+    if (_isChangingRequest) return;
 
-    return ListingRequest(
-      id: '$requesterId-${widget.listing.id}'.replaceAll('/', '-'),
-      listingId: widget.listing.id,
-      listingOwnerId: widget.listing.ownerId,
-      listingTitle: widget.listing.title,
-      listingAmount: widget.listing.amount,
-      listingLocation: widget.listing.location,
-      requesterId: requesterId,
-      requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
-      status: ListingRequestStatus.pending,
-      createdAt: DateTime.now(),
-    );
-  }
+    setState(() => _isChangingRequest = true);
+    final updatedRequest = await widget.onInterestChanged();
+    if (!mounted) return;
 
-  void _toggleInterest() {
-    widget.onInterestChanged();
     setState(() {
-      if (_request == null) {
-        _request = _requestForListing();
-      } else {
-        _request = null;
-      }
+      _request = updatedRequest;
+      _isChangingRequest = false;
     });
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            _request != null
-                ? 'Talebiniz ilan sahibine iletildi.'
-                : 'Talebiniz geri alındı.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
   }
 
   @override
@@ -487,7 +514,7 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                     const SizedBox(height: 16),
                   ],
                   FilledButton.icon(
-                    onPressed: _toggleInterest,
+                    onPressed: _isChangingRequest ? null : _toggleInterest,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(54),
                       backgroundColor: _request != null
@@ -495,12 +522,18 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                           : colorScheme.primary,
                     ),
                     icon: Icon(
-                      _request != null
+                      _isChangingRequest
+                          ? Icons.hourglass_empty
+                          : _request != null
                           ? Icons.check_circle_outline
                           : Icons.volunteer_activism_outlined,
                     ),
                     label: Text(
-                      _request != null ? 'Talep İletildi' : 'İlgileniyorum',
+                      _isChangingRequest
+                          ? 'İşleniyor...'
+                          : _request != null
+                          ? 'Talep İletildi'
+                          : 'İlgileniyorum',
                     ),
                   ),
                 ],

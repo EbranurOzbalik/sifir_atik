@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/services/session_preferences.dart';
 
 import 'login_page.dart';
 import 'my_listings_page.dart';
@@ -13,6 +14,8 @@ class ProfilePage extends StatelessWidget {
       Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
 
   Future<void> _signOut(BuildContext context) async {
+    await const SessionPreferences().clearRememberMe();
+
     if (Firebase.apps.isNotEmpty) {
       await FirebaseAuth.instance.signOut();
     }

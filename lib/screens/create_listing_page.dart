@@ -139,7 +139,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
           ownerId: ownerId,
           listingId: listingId,
         );
-      } catch (_) {
+      } catch (error) {
+        debugPrint('Fotoğraf yükleme hatası: $error');
         photoUploadFailed = true;
       }
     }

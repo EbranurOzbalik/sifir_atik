@@ -135,7 +135,9 @@ void main() {
     );
   });
 
-  testWidgets('listing detail lets users send interest', (tester) async {
+  testWidgets('listing detail does not mark unsaved interest as sent', (
+    tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
     await tester.tap(find.text('İlanları Gör'));
@@ -150,9 +152,9 @@ void main() {
     await tester.tap(find.text('İlgileniyorum'));
     await tester.pump();
 
-    expect(find.text('Talep İletildi'), findsOneWidget);
-    expect(find.text('Talep durumu: Beklemede'), findsOneWidget);
-    expect(find.text('Talebiniz ilan sahibine iletildi.'), findsOneWidget);
+    expect(find.text('Talep İletildi'), findsNothing);
+    expect(find.text('Talep durumu: Beklemede'), findsNothing);
+    expect(find.text('Talep şu anda gönderilemedi.'), findsOneWidget);
   });
 
   testWidgets('listings can be searched and filtered', (tester) async {

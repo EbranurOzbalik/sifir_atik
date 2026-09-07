@@ -1,6 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/services/auth_service.dart';
+import 'package:sifir_atik/services/session_preferences.dart';
 
 import 'home_page.dart';
 
@@ -16,10 +18,17 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
+  final _sessionPreferences = const SessionPreferences();
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMe();
+  }
 
   int get _passwordStrength {
     final password = _passwordController.text;
@@ -42,6 +51,13 @@ class _LoginPageState extends State<LoginPage> {
     3 => 'İyi',
     _ => 'Güçlü',
   };
+
+  Future<void> _loadRememberMe() async {
+    if (Firebase.apps.isEmpty) return;
+
+    final rememberMe = await _sessionPreferences.getRememberMe();
+    if (mounted) setState(() => _rememberMe = rememberMe);
+  }
 
   @override
   void dispose() {
@@ -91,6 +107,7 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      await _sessionPreferences.setRememberMe(_rememberMe);
 
       if (mounted) _openHomePage();
     } on AuthServiceException catch (error) {
@@ -115,6 +132,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _authService.signInWithGoogle();
+      await _sessionPreferences.setRememberMe(_rememberMe);
 
       if (mounted) _openHomePage();
     } on AuthServiceException catch (error) {
@@ -140,6 +158,7 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      await _sessionPreferences.setRememberMe(_rememberMe);
 
       if (mounted) _openHomePage();
     } on AuthServiceException catch (error) {
