@@ -172,14 +172,15 @@ class _WelcomeSection extends StatelessWidget {
           Container(
             width: 64,
             height: 64,
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: colorScheme.primary,
+              color: colorScheme.surface,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.recycling,
-              size: 36,
-              color: colorScheme.onPrimary,
+            child: Image.asset(
+              'assets/images/zero_waste_logo.png',
+              semanticLabel: 'Sıfır atık logosu',
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 20),

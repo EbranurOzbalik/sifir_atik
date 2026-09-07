@@ -5,27 +5,28 @@ atıkları ilan olarak paylaşabilmesi için geliştirdiğim bir Flutter mobil
 uygulamasıdır. Uygulamada amaç, karton, cam, elektronik parça gibi atıkların
 ihtiyacı olan kişiler tarafından daha kolay bulunabilmesini sağlamaktır.
 
-## Bu Projede Üzerinde Durduğum Noktalar
+## Bu Projede Neler Üzerinde Çalıştım?
 
-Bu projede daha önce kullandığım form doğrulama, durum yönetimi ve sayfalar
-arası geçiş yapılarını pekiştirdim. Bunun yanında responsive arayüz, Material 3
-tasarımı, Firebase bağlantısı ve widget testleri üzerine çalıştım.
+Bu projede hem Flutter tarafında pratik yapmak hem de gerçek verilerle çalışan
+bir uygulama akışı kurmak istedim. Daha önce kullandığım form doğrulama, sayfalar
+arası geçiş ve durum yönetimi yapılarını bu projede tekrar kullandım. Sonrasında
+Firebase bağlantısını ekleyerek ilan ve talep bilgilerinin uygulamada kalıcı
+olmasını sağlamaya çalıştım.
 
 - Farklı ekran genişliklerine uyum sağlayan arayüzler geliştirdim
 - Material 3 tema yapısını ve hazır bileşenleri kullandım
 - Arama ve kategori filtrelerinin durumunu yönettim
 - SVG görselleri Flutter arayüzüne entegre ettim
 - Widget testleriyle kullanıcı etkileşimlerini kontrol ettim
-- Android emülatörde çalışan Flutter arayüzünü Firebase servisleriyle bağladım
-- Firebase Firestore ile ilan ve talep verilerini kullanıcıya göre ayırdım
-- Firebase Storage için ilan fotoğrafı yükleme yapısını ekledim
-- Giriş yapan kullanıcıyı hatırlamak için basit bir oturum kontrolü ekledim
+- Firebase Firestore ile ilan ve talep verilerini kaydettim
+- Firebase Storage ile ilanlara fotoğraf ekleme kısmını yaptım
+- Giriş yapan kullanıcı için basit bir oturum kontrolü ekledim
 
-## Uygulamada Neler Var?
+## Uygulamada Bulunan Özellikler
 
 ### Giriş ve kullanıcı işlemleri
 
-- Firebase Authentication ile e-posta/şifre girişi ve kayıt olma
+- E-posta/şifre ile giriş yapma ve kayıt olma
 - Google ile giriş akışı
 - Şifre görünürlüğü, şifre güç göstergesi ve şifre sıfırlama
 - Beni hatırla seçeneği ve uygulama açılışında oturum kontrolü
@@ -35,16 +36,18 @@ tasarımı, Firebase bağlantısı ve widget testleri üzerine çalıştım.
 
 - Atık ilanı oluşturma, listeleme ve detay ekranı
 - Galeriden veya kameradan ilan fotoğrafı seçme
+- İlan fotoğrafını güncelleme veya kaldırma
 - Arama ve kategori filtreleriyle ilanları bulma
 - Kullanıcının kendi ilanlarını İlanlarım sayfasında görmesi
 - İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi
 
 ### Talep işlemleri
 
-- Kullanıcının ilgilendiği ilana talep gönderebilmesi
-- Gönderilen taleplerin Taleplerim sayfasında takip edilebilmesi
-- İlan sahibinin gelen talepleri kabul veya reddedebilmesi
-- Talep durumunun beklemede, kabul edildi veya reddedildi olarak gösterilmesi
+- Kullanıcının ilgilendiği ilana talep göndermesi
+- Gönderilen taleplerin Taleplerim sayfasında görünmesi
+- İlan sahibinin gelen talepleri kabul veya reddetmesi
+- Talep durumunun beklemede, kabul edildi veya reddedildi olarak takip edilmesi
+- İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
 ## Uygulamadan ekranlar
 
@@ -82,17 +85,14 @@ flutter test
 
 ## Proje durumu
 
-Uygulama şu anda geliştirme aşamasındadır. Şimdilik Android emülatör üzerinden
-test ediyorum. İlan oluşturma, ilan listeleme, talep gönderme, talepleri takip
-etme ve ilanları düzenleme/silme akışlarını Firestore ile bağladım. Firestore
-boş olduğunda ekranda örnek ilanlar görünmeye devam eder; yeni ilanlar ve
-talepler ise giriş yapan kullanıcı üzerinden ilgili koleksiyonlara kaydedilir.
+Projeyi şu an Android emülatör üzerinden test ediyorum. Kullanıcı giriş yaptıktan
+sonra ilan oluşturabiliyor, fotoğraf ekleyebiliyor, kendi ilanlarını düzenleyip
+silebiliyor ve başka ilanlara talep gönderebiliyor.
 
-E-posta/şifre, kayıt olma, şifre sıfırlama ve Google ile giriş işlemlerini
-Firebase Authentication servisine bağladım. Bu akışların çalışması için Firebase
-Console üzerinden Email/Password ve Google giriş sağlayıcılarının açık olması
-gerekir.
+Firestore'da henüz ilan yoksa uygulamanın tamamen boş görünmemesi için birkaç
+örnek ilan gösteriyorum. Gerçek ilan eklendiğinde liste Firebase'deki verilerle
+güncelleniyor.
 
-Fotoğraf yükleme tarafında uygulama galeriden veya kameradan görsel seçebiliyor.
-Görselin Firebase Storage'a yüklenebilmesi için Firebase Console üzerinden
-Storage servisinin başlatılmış olması gerekir.
+Şimdilik temel akışları tamamladım. Bundan sonra özellikle farklı kullanıcılarla
+talep gönderme/kabul etme senaryosunu biraz daha test edip arayüzde küçük
+düzenlemeler yapmayı düşünüyorum.
