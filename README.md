@@ -23,21 +23,28 @@ tasarımı, Firebase bağlantısı ve widget testleri üzerine çalıştım.
 
 ## Uygulamada Neler Var?
 
-- Material 3 uyumlu, responsive giriş ekranı
+### Giriş ve kullanıcı işlemleri
+
 - Firebase Authentication ile e-posta/şifre girişi ve kayıt olma
-- Şifre görünürlüğü ve şifre güç göstergesi
-- Beni hatırla seçeneği ve uygulama açılışında oturum kontrolü
 - Google ile giriş akışı
-- Giriş sırasında loading durumu ve hata bildirimi
-- Atık ilanı verme ve ilanları görme seçeneklerini sunan ana ekran taslağı
-- Doğrulamalı atık ilanı oluşturma formu
-- İlan oluştururken galeriden veya kameradan fotoğraf seçme
-- Arama ve kategori filtreleri içeren ilan listesi
-- İlan detay ekranı ve ilgi/talep gönderme akışı
-- Profilim, İlanlarım ve Taleplerim sayfaları
+- Şifre görünürlüğü, şifre güç göstergesi ve şifre sıfırlama
+- Beni hatırla seçeneği ve uygulama açılışında oturum kontrolü
+- Profilim sayfası ve çıkış yapma
+
+### İlan işlemleri
+
+- Atık ilanı oluşturma, listeleme ve detay ekranı
+- Galeriden veya kameradan ilan fotoğrafı seçme
+- Arama ve kategori filtreleriyle ilanları bulma
+- Kullanıcının kendi ilanlarını İlanlarım sayfasında görmesi
 - İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi
+
+### Talep işlemleri
+
+- Kullanıcının ilgilendiği ilana talep gönderebilmesi
+- Gönderilen taleplerin Taleplerim sayfasında takip edilebilmesi
 - İlan sahibinin gelen talepleri kabul veya reddedebilmesi
-- Kullanıcının gönderdiği taleplerin durumunu takip edebilmesi
+- Talep durumunun beklemede, kabul edildi veya reddedildi olarak gösterilmesi
 
 ## Uygulamadan ekranlar
 
@@ -89,6 +96,3 @@ gerekir.
 Fotoğraf yükleme tarafında uygulama galeriden veya kameradan görsel seçebiliyor.
 Görselin Firebase Storage'a yüklenebilmesi için Firebase Console üzerinden
 Storage servisinin başlatılmış olması gerekir.
-
-iOS tarafını ayrıca test etmediğim için README'de bu aşamada Android odağını
-özellikle belirttim.
