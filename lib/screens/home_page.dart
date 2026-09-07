@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'create_listing_page.dart';
 import 'listings_page.dart';
+import 'my_listings_page.dart';
+import 'my_requests_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -15,6 +18,17 @@ class HomePage extends StatelessWidget {
         title: const Text('Sıfır Atık'),
         centerTitle: false,
         backgroundColor: colorScheme.surface,
+        actions: [
+          IconButton(
+            tooltip: 'Profilim',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
+              );
+            },
+            icon: const Icon(Icons.person_outline),
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -47,6 +61,34 @@ class HomePage extends StatelessWidget {
                 );
               },
             );
+            final myListingsCard = _ActionCard(
+              icon: Icons.inventory_2_outlined,
+              title: 'İlanlarım',
+              description: 'Paylaştığım ilanları ve gelen talepleri takip et.',
+              color: colorScheme.secondary,
+              backgroundColor: colorScheme.secondaryContainer,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MyListingsPage(),
+                  ),
+                );
+              },
+            );
+            final myRequestsCard = _ActionCard(
+              icon: Icons.handshake_outlined,
+              title: 'Taleplerim',
+              description: 'İlgilendiğim ilanların son durumunu gör.',
+              color: colorScheme.primary,
+              backgroundColor: colorScheme.primaryContainer,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MyRequestsPage(),
+                  ),
+                );
+              },
+            );
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -66,12 +108,25 @@ class HomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       if (useHorizontalLayout)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Column(
                           children: [
-                            Expanded(child: createListingCard),
-                            const SizedBox(width: 16),
-                            Expanded(child: viewListingsCard),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: createListingCard),
+                                const SizedBox(width: 16),
+                                Expanded(child: viewListingsCard),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: myListingsCard),
+                                const SizedBox(width: 16),
+                                Expanded(child: myRequestsCard),
+                              ],
+                            ),
                           ],
                         )
                       else
@@ -81,6 +136,10 @@ class HomePage extends StatelessWidget {
                             createListingCard,
                             const SizedBox(height: 16),
                             viewListingsCard,
+                            const SizedBox(height: 16),
+                            myListingsCard,
+                            const SizedBox(height: 16),
+                            myRequestsCard,
                           ],
                         ),
                     ],

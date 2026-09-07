@@ -12,6 +12,7 @@ class Listing {
     required this.ownerName,
     required this.createdAt,
     required this.imageAsset,
+    this.imageUrl,
   });
 
   final String id;
@@ -24,6 +25,31 @@ class Listing {
   final String ownerName;
   final DateTime createdAt;
   final String imageAsset;
+  final String? imageUrl;
+
+  Listing copyWith({
+    String? title,
+    String? category,
+    String? location,
+    String? amount,
+    String? description,
+    String? imageAsset,
+    String? imageUrl,
+  }) {
+    return Listing(
+      id: id,
+      title: title ?? this.title,
+      category: category ?? this.category,
+      location: location ?? this.location,
+      amount: amount ?? this.amount,
+      description: description ?? this.description,
+      ownerId: ownerId,
+      ownerName: ownerName,
+      createdAt: createdAt,
+      imageAsset: imageAsset ?? this.imageAsset,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 
   factory Listing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -43,6 +69,7 @@ class Listing {
           : DateTime.now(),
       imageAsset:
           data['imageAsset'] as String? ?? listingImageForCategory('Diğer'),
+      imageUrl: data['imageUrl'] as String?,
     );
   }
 
@@ -57,6 +84,7 @@ class Listing {
       'ownerName': ownerName,
       'createdAt': Timestamp.fromDate(createdAt),
       'imageAsset': imageAsset,
+      if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
     };
   }
 }

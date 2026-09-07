@@ -1,0 +1,34 @@
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:mime/mime.dart';
+
+class PhotoStorageService {
+  const PhotoStorageService({FirebaseStorage? storage}) : _storage = storage;
+
+  final FirebaseStorage? _storage;
+
+  bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
+
+  FirebaseStorage get _bucket => _storage ?? FirebaseStorage.instance;
+
+  Future<String?> uploadListingPhoto({
+    required File photo,
+    required String ownerId,
+    required String listingId,
+  }) async {
+    if (!_isFirebaseReady || ownerId.isEmpty || listingId.isEmpty) return null;
+
+    final extension = photo.path.split('.').last.toLowerCase();
+    final safeExtension = extension.length <= 5 ? extension : 'jpg';
+    final photoPath = 'listing_photos/$ownerId/$listingId.$safeExtension';
+    final metadata = SettableMetadata(
+      contentType: lookupMimeType(photo.path) ?? 'image/jpeg',
+    );
+
+    final snapshot = await _bucket.ref(photoPath).putFile(photo, metadata);
+
+    return snapshot.ref.getDownloadURL();
+  }
+}

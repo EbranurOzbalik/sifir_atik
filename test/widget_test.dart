@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sifir_atik/main.dart';
+import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/screens/create_listing_page.dart';
 import 'package:sifir_atik/screens/home_page.dart';
 
 void main() {
@@ -78,6 +80,18 @@ void main() {
     expect(find.text('İlan taslak olarak kaldı.'), findsOneWidget);
   });
 
+  testWidgets('edit listing form opens with listing values', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: CreateListingPage(listing: sampleListings.first)),
+    );
+
+    expect(find.text('İlanı Düzenle'), findsOneWidget);
+    expect(find.text('İlan bilgilerini düzenle'), findsOneWidget);
+    expect(find.text('Temiz karton kutular'), findsOneWidget);
+    expect(find.text('10 kg'), findsOneWidget);
+    expect(find.text('Değişiklikleri Kaydet'), findsOneWidget);
+  });
+
   testWidgets('home action opens the listings screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
@@ -86,6 +100,39 @@ void main() {
 
     expect(find.text('İlanlarda ara'), findsOneWidget);
     expect(find.text('Temiz karton kutular'), findsOneWidget);
+  });
+
+  testWidgets('home action opens profile screen', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.byTooltip('Profilim'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Profilim'), findsWidgets);
+    expect(find.text('İlanlarım'), findsOneWidget);
+    expect(find.text('Taleplerim'), findsOneWidget);
+    expect(find.text('Çıkış Yap'), findsOneWidget);
+  });
+
+  testWidgets('home actions open my listings and requests screens', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.ensureVisible(find.text('İlanlarım'));
+    await tester.tap(find.text('İlanlarım'));
+    await tester.pumpAndSettle();
+    expect(find.text('Giriş bulunamadı'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Taleplerim'));
+    await tester.tap(find.text('Taleplerim'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Taleplerinizi görmek için giriş yapmalısınız.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('listing detail lets users send interest', (tester) async {

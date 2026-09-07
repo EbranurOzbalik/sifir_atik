@@ -45,30 +45,48 @@ class _ListingsPageState extends State<ListingsPage> {
     super.dispose();
   }
 
+  String _requestIdFor(Listing listing, User? user) {
+    final requesterId = user?.uid ?? 'local-user';
+
+    return '$requesterId-${listing.id}'.replaceAll('/', '-');
+  }
+
+  ListingRequest _requestForListing(Listing listing) {
+    final user = Firebase.apps.isNotEmpty
+        ? FirebaseAuth.instance.currentUser
+        : null;
+
+    return ListingRequest(
+      id: _requestIdFor(listing, user),
+      listingId: listing.id,
+      listingOwnerId: listing.ownerId,
+      listingTitle: listing.title,
+      listingAmount: listing.amount,
+      listingLocation: listing.location,
+      requesterId: user?.uid ?? 'local-user',
+      requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
+      status: ListingRequestStatus.pending,
+      createdAt: DateTime.now(),
+    );
+  }
+
   void _toggleInterest(Listing listing) {
     ListingRequest? newRequest;
+    ListingRequest? removedRequest;
 
     setState(() {
       if (_requestsByListingId.containsKey(listing.id)) {
-        _requestsByListingId.remove(listing.id);
+        removedRequest = _requestsByListingId.remove(listing.id);
       } else {
-        final user = Firebase.apps.isNotEmpty
-            ? FirebaseAuth.instance.currentUser
-            : null;
-        newRequest = ListingRequest(
-          id: 'request-${listing.id}',
-          listingId: listing.id,
-          requesterId: user?.uid ?? 'local-user',
-          requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
-          status: ListingRequestStatus.pending,
-          createdAt: DateTime.now(),
-        );
+        newRequest = _requestForListing(listing);
         _requestsByListingId[listing.id] = newRequest!;
       }
     });
 
     if (newRequest != null) {
       _listingRepository.addRequest(newRequest!);
+    } else if (removedRequest != null) {
+      _listingRepository.deleteRequest(removedRequest!.id);
     }
   }
 
@@ -245,19 +263,13 @@ class _ListingCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
+              SizedBox(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(
-                  color: _listingColor(listing).withValues(alpha: 0.14),
+                child: _ListingImage(
+                  listing: listing,
                   borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: SvgPicture.asset(
-                    listing.imageAsset,
-                    semanticsLabel: listing.title,
-                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -356,21 +368,31 @@ class _ListingDetailPage extends StatefulWidget {
 class _ListingDetailPageState extends State<_ListingDetailPage> {
   late ListingRequest? _request = widget.request;
 
+  ListingRequest _requestForListing() {
+    final user = Firebase.apps.isNotEmpty
+        ? FirebaseAuth.instance.currentUser
+        : null;
+    final requesterId = user?.uid ?? 'local-user';
+
+    return ListingRequest(
+      id: '$requesterId-${widget.listing.id}'.replaceAll('/', '-'),
+      listingId: widget.listing.id,
+      listingOwnerId: widget.listing.ownerId,
+      listingTitle: widget.listing.title,
+      listingAmount: widget.listing.amount,
+      listingLocation: widget.listing.location,
+      requesterId: requesterId,
+      requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
+      status: ListingRequestStatus.pending,
+      createdAt: DateTime.now(),
+    );
+  }
+
   void _toggleInterest() {
     widget.onInterestChanged();
     setState(() {
       if (_request == null) {
-        final user = Firebase.apps.isNotEmpty
-            ? FirebaseAuth.instance.currentUser
-            : null;
-        _request = ListingRequest(
-          id: 'request-${widget.listing.id}',
-          listingId: widget.listing.id,
-          requesterId: user?.uid ?? 'local-user',
-          requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
-          status: ListingRequestStatus.pending,
-          createdAt: DateTime.now(),
-        );
+        _request = _requestForListing();
       } else {
         _request = null;
       }
@@ -406,18 +428,12 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
+                  SizedBox(
                     height: 180,
-                    decoration: BoxDecoration(
-                      color: _listingColor(listing).withValues(alpha: 0.14),
+                    child: _ListingImage(
+                      listing: listing,
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: SvgPicture.asset(
-                        listing.imageAsset,
-                        semanticsLabel: listing.title,
-                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -545,6 +561,50 @@ class _InfoChip extends StatelessWidget {
       label: Text(label),
       backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.4),
       side: BorderSide.none,
+    );
+  }
+}
+
+class _ListingImage extends StatelessWidget {
+  const _ListingImage({
+    required this.listing,
+    required this.borderRadius,
+    required this.padding,
+  });
+
+  final Listing listing;
+  final BorderRadius borderRadius;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = listing.imageUrl;
+
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: imageUrl == null || imageUrl.isEmpty
+          ? Container(
+              color: _listingColor(listing).withValues(alpha: 0.14),
+              padding: padding,
+              child: SvgPicture.asset(
+                listing.imageAsset,
+                semanticsLabel: listing.title,
+              ),
+            )
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: _listingColor(listing).withValues(alpha: 0.14),
+                  padding: padding,
+                  child: SvgPicture.asset(
+                    listing.imageAsset,
+                    semanticsLabel: listing.title,
+                  ),
+                );
+              },
+            ),
     );
   }
 }

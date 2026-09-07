@@ -17,6 +17,8 @@ tasarımı, SVG görsel kullanımı ve widget testleri üzerine çalıştım.
 - SVG görselleri Flutter arayüzüne entegre ettim
 - Widget testleriyle kullanıcı etkileşimlerini kontrol ettim
 - Aynı Flutter kodunu Android ve iOS ortamları için yapılandırdım
+- Firebase Firestore ile ilan ve talep verilerini kullanıcıya göre ayırdım
+- Firebase Storage için ilan fotoğrafı yükleme yapısını ekledim
 
 ## Uygulamada Neler Var?
 
@@ -28,8 +30,13 @@ tasarımı, SVG görsel kullanımı ve widget testleri üzerine çalıştım.
 - Giriş sırasında loading durumu ve hata bildirimi
 - Atık ilanı verme ve ilanları görme seçeneklerini sunan ana ekran taslağı
 - Doğrulamalı atık ilanı oluşturma formu
-- Arama ve kategori filtreleri içeren örnek ilan listesi
+- İlan oluştururken galeriden veya kameradan fotoğraf seçme
+- Arama ve kategori filtreleri içeren ilan listesi
 - İlan detay ekranı ve ilgi/talep gönderme akışı
+- Profilim, İlanlarım ve Taleplerim sayfaları
+- İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi
+- İlan sahibinin gelen talepleri kabul veya reddedebilmesi
+- Kullanıcının gönderdiği taleplerin durumunu takip edebilmesi
 
 ## Uygulamadan ekranlar
 
@@ -67,12 +74,17 @@ flutter test
 
 ## Proje durumu
 
-Uygulama şu anda geliştirme aşamasındadır. İlan oluşturma, ilan listeleme ve
-talep gönderme akışlarını Firebase Firestore bağlantısına hazırladım. Firestore
-boş olduğunda ekranda örnek ilanlar görünmeye devam eder; yeni ilanlar ve
-talepler ise giriş yapan kullanıcı üzerinden ilgili koleksiyonlara kaydedilir.
+Uygulama şu anda geliştirme aşamasındadır. İlan oluşturma, ilan listeleme,
+talep gönderme, talepleri takip etme ve ilanları düzenleme/silme akışlarını
+Firestore ile bağladım. Firestore boş olduğunda ekranda örnek ilanlar görünmeye
+devam eder; yeni ilanlar ve talepler ise giriş yapan kullanıcı üzerinden ilgili
+koleksiyonlara kaydedilir.
 
 E-posta/şifre, kayıt olma, şifre sıfırlama ve Google ile giriş işlemlerini
 Firebase Authentication servisine bağladım. Bu akışların çalışması için Firebase
 Console üzerinden Email/Password ve Google giriş sağlayıcılarının açık olması
 gerekir.
+
+Fotoğraf yükleme tarafında uygulama galeriden veya kameradan görsel seçebiliyor.
+Görselin Firebase Storage'a yüklenebilmesi için Firebase Console üzerinden
+Storage servisinin başlatılmış olması gerekir.
