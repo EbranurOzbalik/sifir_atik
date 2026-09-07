@@ -63,9 +63,13 @@ olmasını sağlamaya çalıştım.
 | --- | --- |
 | <img src="screenshots/05-listing-detail.png" width="260" alt="İlan detayı"> | <img src="screenshots/06-interest-sent.png" width="260" alt="Talep gönderildi ekranı"> |
 
-| İlan oluşturma |
-| --- |
-| <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> |
+| İlan oluşturma | İlanlarım |
+| --- | --- |
+| <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> | <img src="screenshots/08-my-listings.png" width="260" alt="İlanlarım ekranı"> |
+
+| Taleplerim | Profilim |
+| --- | --- |
+| <img src="screenshots/09-my-requests.png" width="260" alt="Taleplerim ekranı"> | <img src="screenshots/10-profile.png" width="260" alt="Profilim ekranı"> |
 
 ## Projeyi Çalıştırma
 
