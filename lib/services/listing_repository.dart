@@ -2,16 +2,24 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
+import 'package:sifir_atik/services/photo_storage_service.dart';
 
 class ListingRepository {
-  const ListingRepository({FirebaseFirestore? firestore})
-    : _firestore = firestore;
+  const ListingRepository({
+    FirebaseFirestore? firestore,
+    PhotoStorageService? photoStorageService,
+  }) : _firestore = firestore,
+       _photoStorageService = photoStorageService;
 
   final FirebaseFirestore? _firestore;
+  final PhotoStorageService? _photoStorageService;
 
   bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
 
   FirebaseFirestore get _db => _firestore ?? FirebaseFirestore.instance;
+
+  PhotoStorageService get _photos =>
+      _photoStorageService ?? const PhotoStorageService();
 
   Stream<List<Listing>> watchListings() async* {
     if (!_isFirebaseReady) {
@@ -150,8 +158,9 @@ class ListingRepository {
         'amount': listing.amount,
         'description': listing.description,
         'imageAsset': listing.imageAsset,
-        if (listing.imageUrl != null && listing.imageUrl!.isNotEmpty)
-          'imageUrl': listing.imageUrl,
+        'imageUrl': listing.imageUrl?.isNotEmpty == true
+            ? listing.imageUrl
+            : FieldValue.delete(),
       });
 
       final requestSnapshot = await _db
@@ -178,6 +187,9 @@ class ListingRepository {
     if (!_isFirebaseReady || listing.id.isEmpty) return false;
 
     try {
+      final isPhotoDeleted = await _photos.deleteListingPhoto(listing.imageUrl);
+      if (!isPhotoDeleted) return false;
+
       final batch = _db.batch();
       final requestSnapshot = await _db
           .collection('listingRequests')

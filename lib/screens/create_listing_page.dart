@@ -38,6 +38,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
   String? _selectedCategory;
   XFile? _selectedPhoto;
+  bool _removeExistingPhoto = false;
   bool _isSaving = false;
 
   bool get _isEditing => widget.listing != null;
@@ -81,7 +82,20 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
     if (photo == null || !mounted) return;
 
-    setState(() => _selectedPhoto = photo);
+    setState(() {
+      _selectedPhoto = photo;
+      _removeExistingPhoto = false;
+    });
+  }
+
+  void _removePhoto() {
+    setState(() {
+      if (_selectedPhoto != null) {
+        _selectedPhoto = null;
+      } else {
+        _removeExistingPhoto = true;
+      }
+    });
   }
 
   void _showPhotoOptions() {
@@ -131,6 +145,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
     final ownerId = oldListing?.ownerId ?? user?.uid ?? 'local-user';
     String? imageUrl;
     var photoUploadFailed = false;
+    var oldPhotoCleanupFailed = false;
 
     if (_selectedPhoto != null && Firebase.apps.isNotEmpty && user != null) {
       try {
@@ -166,12 +181,21 @@ class _CreateListingPageState extends State<CreateListingPage> {
             amount: _amountController.text.trim(),
             description: _descriptionController.text.trim(),
             imageAsset: listingImageForCategory(_selectedCategory!),
-            imageUrl: imageUrl ?? oldListing.imageUrl,
+            imageUrl: imageUrl,
+            clearImageUrl: _removeExistingPhoto,
           );
 
     final isSaved = _isEditing
         ? await _listingRepository.updateListing(listing)
         : await _listingRepository.addListing(listing);
+
+    if (isSaved &&
+        oldListing?.imageUrl?.isNotEmpty == true &&
+        (imageUrl != null || _removeExistingPhoto)) {
+      oldPhotoCleanupFailed = !await _photoStorageService.deleteListingPhoto(
+        oldListing!.imageUrl,
+      );
+    }
 
     if (!mounted) return;
 
@@ -190,9 +214,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
     if (!isSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Database bağlantısı yoksa ilan örnek veri olarak kalır.',
-          ),
+          content: Text('İlan kaydedilemedi, lütfen tekrar deneyin.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -200,6 +222,13 @@ class _CreateListingPageState extends State<CreateListingPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('İlan kaydedildi ama fotoğraf yüklenemedi.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (oldPhotoCleanupFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('İlan kaydedildi ama eski fotoğraf silinemedi.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -248,11 +277,17 @@ class _CreateListingPageState extends State<CreateListingPage> {
                     _PhotoPickerCard(
                       colorScheme: colorScheme,
                       selectedPhoto: _selectedPhoto,
-                      imageUrl: widget.listing?.imageUrl,
-                      onTap: _showPhotoOptions,
-                      onRemove: _selectedPhoto == null
+                      imageUrl: _removeExistingPhoto
                           ? null
-                          : () => setState(() => _selectedPhoto = null),
+                          : widget.listing?.imageUrl,
+                      onTap: _showPhotoOptions,
+                      onRemove:
+                          _selectedPhoto == null &&
+                              (widget.listing?.imageUrl == null ||
+                                  widget.listing!.imageUrl!.isEmpty ||
+                                  _removeExistingPhoto)
+                          ? null
+                          : _removePhoto,
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -415,6 +450,12 @@ class _PhotoPickerCard extends StatelessWidget {
                               imageUrl!,
                               height: 180,
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _PhotoPlaceholder(
+                                  colorScheme: colorScheme,
+                                  message: 'Fotoğraf yüklenemedi',
+                                );
+                              },
                             )
                           : Image.file(
                               File(selectedPhoto!.path),
@@ -444,6 +485,33 @@ class _PhotoPickerCard extends StatelessWidget {
                   ],
                 ),
         ),
+      ),
+    );
+  }
+}
+
+class _PhotoPlaceholder extends StatelessWidget {
+  const _PhotoPlaceholder({required this.colorScheme, required this.message});
+
+  final ColorScheme colorScheme;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 180,
+      color: colorScheme.surfaceContainerHighest,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.broken_image_outlined,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 8),
+          Text(message, style: TextStyle(color: colorScheme.onSurfaceVariant)),
+        ],
       ),
     );
   }

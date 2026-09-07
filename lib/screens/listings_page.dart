@@ -89,6 +89,11 @@ class _ListingsPageState extends State<ListingsPage> {
       return currentRequest;
     }
 
+    if (user != null && listing.ownerId == user.uid) {
+      _showRequestMessage('Kendi ilanınıza talep gönderemezsiniz.');
+      return currentRequest;
+    }
+
     if (Firebase.apps.isNotEmpty &&
         listing.ownerId.startsWith('sample-user-')) {
       _showRequestMessage(
@@ -141,6 +146,14 @@ class _ListingsPageState extends State<ListingsPage> {
       );
   }
 
+  void _syncRequests(List<ListingRequest> requests) {
+    _requestsByListingId
+      ..clear()
+      ..addEntries(
+        requests.map((request) => MapEntry(request.listingId, request)),
+      );
+  }
+
   void _openListingDetail(Listing listing) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -150,6 +163,88 @@ class _ListingsPageState extends State<ListingsPage> {
           onInterestChanged: () => _toggleInterest(listing),
         ),
       ),
+    );
+  }
+
+  Widget _buildListingsContent(BuildContext context) {
+    final filteredListings = _filteredListings;
+
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          sliver: SliverToBoxAdapter(
+            child: TextField(
+              controller: _searchController,
+              textInputAction: TextInputAction.search,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'İlanlarda ara',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isEmpty
+                    ? const Icon(Icons.tune)
+                    : IconButton(
+                        tooltip: 'Aramayı temizle',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                filled: true,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _categories
+                    .map(
+                      (category) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          selected: category == _selectedCategory,
+                          onSelected: (_) {
+                            setState(() => _selectedCategory = category);
+                          },
+                          label: Text(category),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(20),
+          sliver: filteredListings.isEmpty
+              ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
+              : SliverList.separated(
+                  itemCount: filteredListings.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final listing = filteredListings[index];
+                    return _ListingCard(
+                      listing: listing,
+                      request: _requestsByListingId[listing.id],
+                      onTap: () => _openListingDetail(listing),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
@@ -165,87 +260,24 @@ class _ListingsPageState extends State<ListingsPage> {
               _listings = snapshot.data!;
             }
 
-            final filteredListings = _filteredListings;
+            final user = Firebase.apps.isNotEmpty
+                ? FirebaseAuth.instance.currentUser
+                : null;
 
-            return CustomScrollView(
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  sliver: SliverToBoxAdapter(
-                    child: TextField(
-                      controller: _searchController,
-                      textInputAction: TextInputAction.search,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: 'İlanlarda ara',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchController.text.isEmpty
-                            ? const Icon(Icons.tune)
-                            : IconButton(
-                                tooltip: 'Aramayı temizle',
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.close),
-                              ),
-                        filled: true,
-                        fillColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverToBoxAdapter(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _categories
-                            .map(
-                              (category) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: FilterChip(
-                                  selected: category == _selectedCategory,
-                                  onSelected: (_) {
-                                    setState(
-                                      () => _selectedCategory = category,
-                                    );
-                                  },
-                                  label: Text(category),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.all(20),
-                  sliver: filteredListings.isEmpty
-                      ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
-                      : SliverList.separated(
-                          itemCount: filteredListings.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final listing = filteredListings[index];
-                            return _ListingCard(
-                              listing: listing,
-                              request: _requestsByListingId[listing.id],
-                              onTap: () => _openListingDetail(listing),
-                            );
-                          },
-                        ),
-                ),
-              ],
+            if (user == null) {
+              _requestsByListingId.clear();
+              return _buildListingsContent(context);
+            }
+
+            return StreamBuilder<List<ListingRequest>>(
+              stream: _listingRepository.watchRequestsByRequester(user.uid),
+              builder: (context, requestsSnapshot) {
+                if (requestsSnapshot.hasData) {
+                  _syncRequests(requestsSnapshot.data!);
+                }
+
+                return _buildListingsContent(context);
+              },
             );
           },
         ),
@@ -303,6 +335,7 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final statusInfo = request == null ? null : _requestStatusInfo(request!);
 
     return Card(
       elevation: 0,
@@ -385,12 +418,12 @@ class _ListingCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (request != null) ...[
+                    if (statusInfo != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Talebiniz beklemede',
+                        'Talep durumu: ${statusInfo.label}',
                         style: TextStyle(
-                          color: colorScheme.primary,
+                          color: statusInfo.color,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -532,7 +565,7 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                       _isChangingRequest
                           ? 'İşleniyor...'
                           : _request != null
-                          ? 'Talep İletildi'
+                          ? 'Talebi Geri Al'
                           : 'İlgileniyorum',
                     ),
                   ),
@@ -553,20 +586,20 @@ class _RequestStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final statusInfo = _requestStatusInfo(request);
 
     return Card(
       elevation: 0,
-      color: colorScheme.secondaryContainer.withValues(alpha: 0.45),
+      color: statusInfo.color.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.hourglass_top_outlined, color: colorScheme.secondary),
+            Icon(statusInfo.icon, color: statusInfo.color),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Talep durumu: Beklemede',
+                'Talep durumu: ${statusInfo.label}',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -577,6 +610,34 @@ class _RequestStatusCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RequestStatusInfo {
+  const _RequestStatusInfo(this.label, this.icon, this.color);
+
+  final String label;
+  final IconData icon;
+  final Color color;
+}
+
+_RequestStatusInfo _requestStatusInfo(ListingRequest request) {
+  return switch (request.status) {
+    ListingRequestStatus.accepted => const _RequestStatusInfo(
+      'Kabul edildi',
+      Icons.check_circle_outline,
+      Color(0xFF2E7D32),
+    ),
+    ListingRequestStatus.rejected => const _RequestStatusInfo(
+      'Reddedildi',
+      Icons.cancel_outlined,
+      Color(0xFFC62828),
+    ),
+    ListingRequestStatus.pending => const _RequestStatusInfo(
+      'Beklemede',
+      Icons.hourglass_top_outlined,
+      Color(0xFFF57C00),
+    ),
+  };
 }
 
 class _InfoChip extends StatelessWidget {

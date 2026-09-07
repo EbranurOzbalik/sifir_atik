@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
 
@@ -17,10 +16,13 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   final _sessionPreferences = const SessionPreferences();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isRegisterMode = false;
   bool _rememberMe = false;
   bool _isLoading = false;
 
@@ -63,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -93,6 +96,20 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  String? _validateConfirmPassword(String? value) {
+    if (!_isRegisterMode) return null;
+
+    if (value == null || value.isEmpty) {
+      return 'Şifre tekrarını yazın.';
+    }
+
+    if (value != _passwordController.text) {
+      return 'Şifreler aynı olmalıdır.';
+    }
+
+    return null;
+  }
+
   Future<void> _submit() async {
     if (_isLoading) return;
 
@@ -103,6 +120,17 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
+      if (_isRegisterMode) {
+        await _authService.registerWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        await _sessionPreferences.setRememberMe(_rememberMe);
+
+        if (mounted) _openHomePage();
+        return;
+      }
+
       await _authService.signInWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -144,32 +172,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _registerWithEmail() async {
-    if (_isLoading) return;
-
-    FocusScope.of(context).unfocus();
-
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      await _authService.registerWithEmail(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-      await _sessionPreferences.setRememberMe(_rememberMe);
-
-      if (mounted) _openHomePage();
-    } on AuthServiceException catch (error) {
-      if (mounted) _showMessage(error.message);
-    } catch (_) {
-      if (mounted) _showMessage('Kayıt sırasında bir hata oluştu.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   Future<void> _sendPasswordResetEmail() async {
     if (_isLoading) return;
 
@@ -204,6 +206,16 @@ class _LoginPageState extends State<LoginPage> {
       );
   }
 
+  void _toggleAuthMode() {
+    FocusScope.of(context).unfocus();
+    _formKey.currentState?.reset();
+
+    setState(() {
+      _isRegisterMode = !_isRegisterMode;
+      _confirmPasswordController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -230,7 +242,10 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _Header(colorScheme: colorScheme),
+                          _Header(
+                            colorScheme: colorScheme,
+                            isRegisterMode: _isRegisterMode,
+                          ),
                           const SizedBox(height: 40),
                           TextFormField(
                             controller: _emailController,
@@ -250,12 +265,14 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.done,
+                            textInputAction: _isRegisterMode
+                                ? TextInputAction.next
+                                : TextInputAction.done,
                             autofillHints: const [AutofillHints.password],
                             validator: _validatePassword,
                             onChanged: (_) => setState(() {}),
                             onFieldSubmitted: (_) {
-                              _submit();
+                              if (!_isRegisterMode) _submit();
                             },
                             decoration: InputDecoration(
                               labelText: 'Şifre',
@@ -278,6 +295,38 @@ class _LoginPageState extends State<LoginPage> {
                               border: const OutlineInputBorder(),
                             ),
                           ),
+                          if (_isRegisterMode) ...[
+                            const SizedBox(height: 18),
+                            TextFormField(
+                              controller: _confirmPasswordController,
+                              obscureText: _obscureConfirmPassword,
+                              textInputAction: TextInputAction.done,
+                              autofillHints: const [AutofillHints.newPassword],
+                              validator: _validateConfirmPassword,
+                              onFieldSubmitted: (_) => _submit(),
+                              decoration: InputDecoration(
+                                labelText: 'Şifre tekrar',
+                                prefixIcon: const Icon(Icons.lock_reset),
+                                suffixIcon: IconButton(
+                                  tooltip: _obscureConfirmPassword
+                                      ? 'Şifre tekrarını göster'
+                                      : 'Şifre tekrarını gizle',
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _obscureConfirmPassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                            ),
+                          ],
                           if (_passwordController.text.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             _PasswordStrengthIndicator(
@@ -304,7 +353,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: _isLoading
+                                onPressed: _isLoading || _isRegisterMode
                                     ? null
                                     : _sendPasswordResetEmail,
                                 child: const Text('Şifremi Unuttum?'),
@@ -328,7 +377,11 @@ class _LoginPageState extends State<LoginPage> {
                                       strokeWidth: 2.5,
                                     ),
                                   )
-                                : const Text('Giriş Yap'),
+                                : Text(
+                                    _isRegisterMode
+                                        ? 'Hesap Oluştur'
+                                        : 'Giriş Yap',
+                                  ),
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -367,20 +420,23 @@ class _LoginPageState extends State<LoginPage> {
                             label: const Text('Google ile Giriş Yap'),
                           ),
                           const SizedBox(height: 28),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                'Hesabın yok mu?',
+                                _isRegisterMode
+                                    ? 'Zaten hesabın var mı?'
+                                    : 'Hesabın yok mu?',
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               TextButton(
-                                onPressed: _isLoading
-                                    ? null
-                                    : _registerWithEmail,
-                                child: const Text('Kayıt Ol'),
+                                onPressed: _isLoading ? null : _toggleAuthMode,
+                                child: Text(
+                                  _isRegisterMode ? 'Giriş Yap' : 'Kayıt Ol',
+                                ),
                               ),
                             ],
                           ),
@@ -448,9 +504,10 @@ class _PasswordStrengthIndicator extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.colorScheme});
+  const _Header({required this.colorScheme, required this.isRegisterMode});
 
   final ColorScheme colorScheme;
+  final bool isRegisterMode;
 
   @override
   Widget build(BuildContext context) {
@@ -458,14 +515,23 @@ class _Header extends StatelessWidget {
       children: [
         Container(
           width: 160,
-          height: 126,
+          height: 138,
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.45),
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          child: SvgPicture.asset(
-            'assets/images/zero_waste_hero.svg',
-            semanticsLabel: 'Sıfır atık görseli',
+          child: Image.asset(
+            'assets/images/zero_waste_logo.png',
+            semanticLabel: 'Sıfır atık görseli',
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(height: 20),
@@ -478,7 +544,9 @@ class _Header extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Daha sürdürülebilir bir gelecek için\naramıza hoş geldiniz.',
+          isRegisterMode
+              ? 'Yeni hesap oluşturup ilan paylaşmaya başlayın.'
+              : 'Daha sürdürülebilir bir gelecek için\naramıza hoş geldiniz.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,

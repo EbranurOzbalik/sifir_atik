@@ -27,6 +27,20 @@ void main() {
     expect(find.text('Güçlü'), findsOneWidget);
   });
 
+  testWidgets('register action opens a separate create account form', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const SifirAtikApp());
+
+    await tester.ensureVisible(find.text('Kayıt Ol'));
+    await tester.tap(find.text('Kayıt Ol'));
+    await tester.pump();
+
+    expect(find.text('Şifre tekrar'), findsOneWidget);
+    expect(find.text('Hesap Oluştur'), findsOneWidget);
+    expect(find.text('Zaten hesabın var mı?'), findsOneWidget);
+  });
+
   testWidgets('login shows firebase warning when auth is not ready', (
     tester,
   ) async {
@@ -90,6 +104,33 @@ void main() {
     expect(find.text('Temiz karton kutular'), findsOneWidget);
     expect(find.text('10 kg'), findsOneWidget);
     expect(find.text('Değişiklikleri Kaydet'), findsOneWidget);
+  });
+
+  testWidgets('edit listing form can remove existing photo', (tester) async {
+    final listing = sampleListings.first.copyWith(
+      imageUrl: 'https://example.com/photo.jpg',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: CreateListingPage(listing: listing)),
+    );
+
+    expect(find.text('Mevcut fotoğraf'), findsOneWidget);
+
+    await tester.tap(find.text('Kaldır'));
+    await tester.pump();
+
+    expect(find.text('Mevcut fotoğraf'), findsNothing);
+    expect(find.text('Fotoğraf Ekle'), findsOneWidget);
+  });
+
+  test('listing copyWith can clear image url', () {
+    final listing = sampleListings.first.copyWith(
+      imageUrl: 'https://example.com/photo.jpg',
+    );
+
+    expect(listing.imageUrl, isNotNull);
+    expect(listing.copyWith(clearImageUrl: true).imageUrl, isNull);
   });
 
   testWidgets('home action opens the listings screen', (tester) async {

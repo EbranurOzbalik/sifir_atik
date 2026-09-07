@@ -31,4 +31,19 @@ class PhotoStorageService {
 
     return snapshot.ref.getDownloadURL();
   }
+
+  Future<bool> deleteListingPhoto(String? imageUrl) async {
+    if (!_isFirebaseReady || imageUrl == null || imageUrl.isEmpty) {
+      return true;
+    }
+
+    try {
+      await _bucket.refFromURL(imageUrl).delete();
+      return true;
+    } on FirebaseException catch (error) {
+      return error.code == 'object-not-found';
+    } catch (_) {
+      return false;
+    }
+  }
 }

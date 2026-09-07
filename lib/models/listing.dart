@@ -35,6 +35,7 @@ class Listing {
     String? description,
     String? imageAsset,
     String? imageUrl,
+    bool clearImageUrl = false,
   }) {
     return Listing(
       id: id,
@@ -47,7 +48,7 @@ class Listing {
       ownerName: ownerName,
       createdAt: createdAt,
       imageAsset: imageAsset ?? this.imageAsset,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrl: clearImageUrl ? null : imageUrl ?? this.imageUrl,
     );
   }
 
