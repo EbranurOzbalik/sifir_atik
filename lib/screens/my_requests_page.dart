@@ -5,28 +5,40 @@ import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 
 class MyRequestsPage extends StatelessWidget {
-  const MyRequestsPage({super.key});
+  const MyRequestsPage({
+    super.key,
+    this.repository = const ListingRepository(),
+    this.currentUserId,
+    this.isFirebaseReady,
+  });
 
-  static const _repository = ListingRepository();
+  final ListingRepository repository;
+  final String? currentUserId;
+  final bool? isFirebaseReady;
 
-  User? get _user =>
-      Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
+  bool get _hasFirebase => isFirebaseReady ?? Firebase.apps.isNotEmpty;
+
+  User? get _user => _hasFirebase && Firebase.apps.isNotEmpty
+      ? FirebaseAuth.instance.currentUser
+      : null;
+
+  String? get _userId => currentUserId ?? _user?.uid;
 
   @override
   Widget build(BuildContext context) {
-    final user = _user;
+    final userId = _userId;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Taleplerim')),
       body: SafeArea(
-        child: user == null
+        child: userId == null
             ? const _EmptyState(
                 icon: Icons.lock_outline,
                 title: 'Giriş bulunamadı',
                 message: 'Taleplerinizi görmek için giriş yapmalısınız.',
               )
             : StreamBuilder<List<ListingRequest>>(
-                stream: _repository.watchRequestsByRequester(user.uid),
+                stream: repository.watchRequestsByRequester(userId),
                 builder: (context, requestsSnapshot) {
                   final requests = requestsSnapshot.data ?? const [];
 

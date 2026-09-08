@@ -9,7 +9,18 @@ import 'package:sifir_atik/services/listing_repository.dart';
 typedef InterestChangedCallback = Future<ListingRequest?> Function();
 
 class ListingsPage extends StatefulWidget {
-  const ListingsPage({super.key});
+  const ListingsPage({
+    super.key,
+    this.repository = const ListingRepository(),
+    this.currentUserId,
+    this.currentUserName,
+    this.isFirebaseReady,
+  });
+
+  final ListingRepository repository;
+  final String? currentUserId;
+  final String? currentUserName;
+  final bool? isFirebaseReady;
 
   @override
   State<ListingsPage> createState() => _ListingsPageState();
@@ -21,10 +32,22 @@ class _ListingsPageState extends State<ListingsPage> {
   final Map<String, ListingRequest> _requestsByListingId = {};
   final Set<String> _savingRequestListingIds = {};
   final _searchController = TextEditingController();
-  final _listingRepository = const ListingRepository();
 
   String _selectedCategory = 'Tümü';
   List<Listing> _listings = sampleListings;
+
+  bool get _hasFirebase => widget.isFirebaseReady ?? Firebase.apps.isNotEmpty;
+
+  User? get _firebaseUser => _hasFirebase && Firebase.apps.isNotEmpty
+      ? FirebaseAuth.instance.currentUser
+      : null;
+
+  String? get _currentUserId => widget.currentUserId ?? _firebaseUser?.uid;
+
+  String? get _currentUserName =>
+      widget.currentUserName ??
+      _firebaseUser?.displayName ??
+      _firebaseUser?.email;
 
   List<Listing> get _filteredListings {
     final query = _searchController.text.trim().toLowerCase();
@@ -49,15 +72,13 @@ class _ListingsPageState extends State<ListingsPage> {
   }
 
   String _requestIdFor(Listing listing, User? user) {
-    final requesterId = user?.uid ?? 'local-user';
+    final requesterId = _currentUserId ?? user?.uid ?? 'local-user';
 
     return '$requesterId-${listing.id}'.replaceAll('/', '-');
   }
 
   ListingRequest _requestForListing(Listing listing) {
-    final user = Firebase.apps.isNotEmpty
-        ? FirebaseAuth.instance.currentUser
-        : null;
+    final user = _firebaseUser;
 
     return ListingRequest(
       id: _requestIdFor(listing, user),
@@ -66,8 +87,8 @@ class _ListingsPageState extends State<ListingsPage> {
       listingTitle: listing.title,
       listingAmount: listing.amount,
       listingLocation: listing.location,
-      requesterId: user?.uid ?? 'local-user',
-      requesterName: user?.displayName ?? user?.email ?? 'Ebranur',
+      requesterId: _currentUserId ?? user?.uid ?? 'local-user',
+      requesterName: _currentUserName ?? 'Ebranur',
       status: ListingRequestStatus.pending,
       createdAt: DateTime.now(),
     );
@@ -80,22 +101,19 @@ class _ListingsPageState extends State<ListingsPage> {
 
     final currentRequest = _requestsByListingId[listing.id];
     final isSendingRequest = currentRequest == null;
-    final user = Firebase.apps.isNotEmpty
-        ? FirebaseAuth.instance.currentUser
-        : null;
+    final userId = _currentUserId;
 
-    if (Firebase.apps.isNotEmpty && user == null) {
+    if (_hasFirebase && userId == null) {
       _showRequestMessage('Talep göndermek için giriş yapmalısınız.');
       return currentRequest;
     }
 
-    if (user != null && listing.ownerId == user.uid) {
+    if (userId != null && listing.ownerId == userId) {
       _showRequestMessage('Kendi ilanınıza talep gönderemezsiniz.');
       return currentRequest;
     }
 
-    if (Firebase.apps.isNotEmpty &&
-        listing.ownerId.startsWith('sample-user-')) {
+    if (_hasFirebase && listing.ownerId.startsWith('sample-user-')) {
       _showRequestMessage(
         'Bu örnek ilana talep gönderilemiyor. Önce gerçek bir ilan oluşturun.',
       );
@@ -106,8 +124,8 @@ class _ListingsPageState extends State<ListingsPage> {
 
     final nextRequest = isSendingRequest ? _requestForListing(listing) : null;
     final isSaved = isSendingRequest
-        ? await _listingRepository.addRequest(nextRequest!)
-        : await _listingRepository.deleteRequest(currentRequest.id);
+        ? await widget.repository.addRequest(nextRequest!)
+        : await widget.repository.deleteRequest(currentRequest.id);
 
     if (!mounted) return currentRequest;
 
@@ -254,23 +272,21 @@ class _ListingsPageState extends State<ListingsPage> {
       appBar: AppBar(title: const Text('İlanları Gör')),
       body: SafeArea(
         child: StreamBuilder<List<Listing>>(
-          stream: _listingRepository.watchListings(),
+          stream: widget.repository.watchListings(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               _listings = snapshot.data!;
             }
 
-            final user = Firebase.apps.isNotEmpty
-                ? FirebaseAuth.instance.currentUser
-                : null;
+            final userId = _currentUserId;
 
-            if (user == null) {
+            if (userId == null) {
               _requestsByListingId.clear();
               return _buildListingsContent(context);
             }
 
             return StreamBuilder<List<ListingRequest>>(
-              stream: _listingRepository.watchRequestsByRequester(user.uid),
+              stream: widget.repository.watchRequestsByRequester(userId),
               builder: (context, requestsSnapshot) {
                 if (requestsSnapshot.hasData) {
                   _syncRequests(requestsSnapshot.data!);

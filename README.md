@@ -97,12 +97,24 @@ ilan oluşturma formunu, arama ve kategori filtrelerini kontrol ediyorum.
 Repository testlerinde ise sahte Firestore kullanarak ilan ekleme, ilan
 düzenlenince bağlı talep bilgisinin güncellenmesi, ilan silinince ilgili
 taleplerin kaldırılması ve talep durumunun güncellenmesi gibi akışları
-deniyorum.
+deniyorum. Ayrıca kullanıcının kendi ilanına talep gönderememesi, başarısız
+talep işleminde yanlışlıkla başarılı mesaj gösterilmemesi, fotoğraf kaldırma ve
+talep durumlarının ekranda doğru görünmesi de test ediliyor.
 
 Gerçek kayıt olma, Google ile giriş, fotoğraf yükleme ve iki farklı kullanıcıyla
 baştan sona çalışan talep akışı için ileride ayrıca entegrasyon testleri
 eklenebilir. Bu kısımları şimdilik Android emülatör üzerinde manuel olarak
 kontrol ediyorum.
+
+## Manuel test senaryosu
+
+Android emülatörde iki farklı kullanıcıyla şu akışı kontrol ettim:
+
+1. İlk kullanıcıyla giriş yapıp örnek bir ilan oluşturdum.
+2. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
+3. İlk kullanıcıyla tekrar giriş yapıp gelen talebi İlanlarım ekranında gördüm.
+4. Talebi kabul ettiğimde ikinci kullanıcının Taleplerim ekranında durumun
+   güncellendiğini kontrol ettim.
 
 ## Proje durumu
 
