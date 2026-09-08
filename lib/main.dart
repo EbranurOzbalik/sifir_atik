@@ -11,7 +11,16 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } catch (_) {}
+  } catch (error, stackTrace) {
+    debugPrint('Firebase başlatılamadı: $error');
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'firebase initialization',
+      ),
+    );
+  }
 
   runApp(const SifirAtikApp());
 }

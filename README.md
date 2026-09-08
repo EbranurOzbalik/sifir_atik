@@ -129,3 +129,7 @@ güncelleniyor.
 Şimdilik temel Android akışlarını demo yapılabilecek seviyeye getirdim. İleride
 iOS tarafındaki izin ve platform ayarlarını da ayrıca kontrol ederek uygulamayı
 iki platformda daha düzenli hale getirmeyi düşünüyorum.
+
+Android release ayarında şu an debug imza anahtarı kullanılıyor. Bu demo ve
+yerel denemeler için yeterli; uygulama Play Store'a çıkarılacak olursa ayrı bir
+release imza ayarı yapılması gerekir.

@@ -130,6 +130,12 @@ class _CreateListingPageState extends State<CreateListingPage> {
     );
   }
 
+  String _ownerNameFor(User? user) {
+    final displayName = user?.displayName?.trim();
+
+    return displayName?.isNotEmpty == true ? displayName! : 'Kullanıcı';
+  }
+
   Future<void> _submitDraft() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -169,7 +175,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
             amount: _amountController.text.trim(),
             description: _descriptionController.text.trim(),
             ownerId: ownerId,
-            ownerName: user?.displayName ?? user?.email ?? 'Ebranur',
+            ownerName: _ownerNameFor(user),
             createdAt: now,
             imageAsset: listingImageForCategory(_selectedCategory!),
             imageUrl: imageUrl,
