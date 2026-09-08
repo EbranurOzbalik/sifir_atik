@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCtgPaxoahZbqF3ikRuC0c1V_7SvYuyAfw',
-    appId: '1:785812597526:android:5aea8703167665ca54be37',
+    appId: '1:785812597526:android:42351b78c1b4d68454be37',
     messagingSenderId: '785812597526',
     projectId: 'sifir-atik-46bd0',
     storageBucket: 'sifir-atik-46bd0.firebasestorage.app',

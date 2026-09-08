@@ -1,4 +1,4 @@
-package com.example.sifir_atik
+package com.ebranurozbalik.sifiratik
 
 import io.flutter.embedding.android.FlutterActivity
 

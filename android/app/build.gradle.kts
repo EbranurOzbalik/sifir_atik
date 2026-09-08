@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sifir_atik"
+    namespace = "com.ebranurozbalik.sifiratik"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.sifir_atik"
+        applicationId = "com.ebranurozbalik.sifiratik"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -1,5 +1,5 @@
 name: sifir_atik
-description: "A new Flutter project."
+description: "Atık ilanları ve talepleri için geliştirilen Flutter mobil uygulaması."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -55,6 +55,14 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   fake_cloud_firestore: ^4.2.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/zero_waste_logo.png"
+  adaptive_icon_background: "#F5F1E7"
+  adaptive_icon_foreground: "assets/images/zero_waste_logo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

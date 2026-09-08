@@ -7,17 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:785812597526:android:5aea8703167665ca54be37",
+        "mobilesdk_app_id": "1:785812597526:android:42351b78c1b4d68454be37",
         "android_client_info": {
-          "package_name": "com.example.sifir_atik"
+          "package_name": "com.ebranurozbalik.sifiratik"
         }
       },
       "oauth_client": [
         {
-          "client_id": "785812597526-k2sprrnepltt0rqu1rv1d9ufvg4pkkhu.apps.googleusercontent.com",
+          "client_id": "785812597526-g71817v04d913fe4vrt2pmdldmoc6ke7.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.sifir_atik",
+            "package_name": "com.ebranurozbalik.sifiratik",
             "certificate_hash": "55871de3feefc177b54e1827478241fd133391b9"
           }
         },
