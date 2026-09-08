@@ -14,7 +14,7 @@ class ListingRepository {
   final FirebaseFirestore? _firestore;
   final PhotoStorageService? _photoStorageService;
 
-  bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
+  bool get _isFirebaseReady => _firestore != null || Firebase.apps.isNotEmpty;
 
   FirebaseFirestore get _db => _firestore ?? FirebaseFirestore.instance;
 
