@@ -88,6 +88,17 @@ flutter analyze
 flutter test
 ```
 
+## Test durumu
+
+Projede şu an temel widget testleri bulunuyor. Bu testlerle giriş ekranındaki
+form alanları, şifre göstergesi, sayfalar arası geçişler, ilan oluşturma formu,
+arama ve kategori filtreleri gibi arayüz davranışlarını kontrol ediyorum.
+
+Firebase bağlantısı olan işlemleri ise şimdilik daha çok Android emülatör
+üzerinden manuel olarak deniyorum. Kayıt olma, gerçek giriş, ilan ekleme,
+fotoğraf yükleme ve iki farklı kullanıcı arasında talep gönderme/kabul etme
+akışları için ileride ayrı entegrasyon testleri eklenebilir.
+
 ## Proje durumu
 
 Projeyi şu an Android emülatör üzerinden geliştirip test ediyorum. Kullanıcı
