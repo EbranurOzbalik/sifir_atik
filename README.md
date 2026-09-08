@@ -73,7 +73,8 @@ olmasını sağlamaya çalıştım.
 
 ## Projeyi Çalıştırma
 
-Flutter SDK'nın kurulu olduğundan emin olduktan sonra Android emülatörde:
+Bu proje şu anda Android platformunda geliştirilmiş ve test edilmiştir. Flutter
+SDK'nın kurulu olduğundan emin olduktan sonra Android emülatörde:
 
 ```bash
 flutter pub get
@@ -89,14 +90,14 @@ flutter test
 
 ## Proje durumu
 
-Projeyi şu an Android emülatör üzerinden test ediyorum. Kullanıcı giriş yaptıktan
-sonra ilan oluşturabiliyor, fotoğraf ekleyebiliyor, kendi ilanlarını düzenleyip
-silebiliyor ve başka ilanlara talep gönderebiliyor.
+Projeyi şu an Android emülatör üzerinden geliştirip test ediyorum. Kullanıcı
+giriş yaptıktan sonra ilan oluşturabiliyor, fotoğraf ekleyebiliyor, kendi
+ilanlarını düzenleyip silebiliyor ve başka ilanlara talep gönderebiliyor.
 
 Firestore'da henüz ilan yoksa uygulamanın tamamen boş görünmemesi için birkaç
 örnek ilan gösteriyorum. Gerçek ilan eklendiğinde liste Firebase'deki verilerle
 güncelleniyor.
 
-Şimdilik temel akışları tamamladım. Bundan sonra özellikle farklı kullanıcılarla
-talep gönderme/kabul etme senaryosunu biraz daha test edip arayüzde küçük
-düzenlemeler yapmayı düşünüyorum.
+Şimdilik temel Android akışlarını demo yapılabilecek seviyeye getirdim. İleride
+iOS tarafındaki izin ve platform ayarlarını da ayrıca kontrol ederek uygulamayı
+iki platformda daha düzenli hale getirmeyi düşünüyorum.
