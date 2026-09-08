@@ -13,6 +13,20 @@ class PhotoStorageService {
 
   FirebaseStorage get _bucket => _storage ?? FirebaseStorage.instance;
 
+  static String listingPhotoPath({
+    required String ownerId,
+    required String listingId,
+    required String extension,
+    DateTime? uploadedAt,
+  }) {
+    final safeExtension = extension.toLowerCase().length <= 5
+        ? extension.toLowerCase()
+        : 'jpg';
+    final timestamp = (uploadedAt ?? DateTime.now()).microsecondsSinceEpoch;
+
+    return 'listing_photos/$ownerId/$listingId-$timestamp.$safeExtension';
+  }
+
   Future<String?> uploadListingPhoto({
     required File photo,
     required String ownerId,
@@ -21,8 +35,11 @@ class PhotoStorageService {
     if (!_isFirebaseReady || ownerId.isEmpty || listingId.isEmpty) return null;
 
     final extension = photo.path.split('.').last.toLowerCase();
-    final safeExtension = extension.length <= 5 ? extension : 'jpg';
-    final photoPath = 'listing_photos/$ownerId/$listingId.$safeExtension';
+    final photoPath = listingPhotoPath(
+      ownerId: ownerId,
+      listingId: listingId,
+      extension: extension,
+    );
     final metadata = SettableMetadata(
       contentType: lookupMimeType(photo.path) ?? 'image/jpeg',
     );
