@@ -31,7 +31,12 @@ service cloud.firestore {
             && request.resource.data.status in ['pending', 'accepted', 'rejected']
           )
           || request.resource.data.diff(resource.data).changedKeys()
-            .hasOnly(['listingTitle', 'listingAmount', 'listingLocation'])
+            .hasOnly([
+              'listingTitle',
+              'listingAmount',
+              'listingLocation',
+              'ownerContactInfo'
+            ])
         );
       allow delete: if request.auth != null
         && (request.auth.uid == resource.data.requesterId

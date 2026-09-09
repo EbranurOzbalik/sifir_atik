@@ -158,6 +158,7 @@ class ListingRepository {
         'amount': listing.amount,
         'description': listing.description,
         'imageAsset': listing.imageAsset,
+        'contactInfo': listing.contactInfo,
         'imageUrl': listing.imageUrl?.isNotEmpty == true
             ? listing.imageUrl
             : FieldValue.delete(),
@@ -173,6 +174,7 @@ class ListingRepository {
           'listingTitle': listing.title,
           'listingAmount': listing.amount,
           'listingLocation': listing.location,
+          'ownerContactInfo': listing.contactInfo,
         });
       }
 

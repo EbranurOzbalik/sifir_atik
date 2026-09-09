@@ -32,6 +32,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  final _contactController = TextEditingController();
   final _listingRepository = const ListingRepository();
   final _photoStorageService = const PhotoStorageService();
   final _imagePicker = ImagePicker();
@@ -53,6 +54,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
       _amountController.text = listing.amount;
       _descriptionController.text = listing.description;
       _locationController.text = listing.location;
+      _contactController.text = listing.contactInfo;
       _selectedCategory = listing.category;
     }
   }
@@ -63,6 +65,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
     _amountController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _contactController.dispose();
     super.dispose();
   }
 
@@ -178,6 +181,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
             ownerName: _ownerNameFor(user),
             createdAt: now,
             imageAsset: listingImageForCategory(_selectedCategory!),
+            contactInfo: _contactController.text.trim(),
             imageUrl: imageUrl,
           )
         : oldListing.copyWith(
@@ -187,6 +191,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
             amount: _amountController.text.trim(),
             description: _descriptionController.text.trim(),
             imageAsset: listingImageForCategory(_selectedCategory!),
+            contactInfo: _contactController.text.trim(),
             imageUrl: imageUrl,
             clearImageUrl: _removeExistingPhoto,
           );
@@ -357,12 +362,25 @@ class _CreateListingPageState extends State<CreateListingPage> {
                     const SizedBox(height: 18),
                     TextFormField(
                       controller: _locationController,
-                      textInputAction: TextInputAction.done,
+                      textInputAction: TextInputAction.next,
                       validator: _requiredValidator,
                       decoration: const InputDecoration(
                         labelText: 'Konum',
                         hintText: 'İlçe veya mahalle',
                         prefixIcon: Icon(Icons.location_on_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    TextFormField(
+                      controller: _contactController,
+                      textInputAction: TextInputAction.done,
+                      keyboardType: TextInputType.phone,
+                      validator: _requiredValidator,
+                      decoration: const InputDecoration(
+                        labelText: 'İletişim bilgisi',
+                        hintText: 'Telefon numarası veya kısa not',
+                        prefixIcon: Icon(Icons.phone_outlined),
                         border: OutlineInputBorder(),
                       ),
                     ),

@@ -12,6 +12,7 @@ class Listing {
     required this.ownerName,
     required this.createdAt,
     required this.imageAsset,
+    this.contactInfo = '',
     this.imageUrl,
   });
 
@@ -25,6 +26,7 @@ class Listing {
   final String ownerName;
   final DateTime createdAt;
   final String imageAsset;
+  final String contactInfo;
   final String? imageUrl;
 
   Listing copyWith({
@@ -34,6 +36,7 @@ class Listing {
     String? amount,
     String? description,
     String? imageAsset,
+    String? contactInfo,
     String? imageUrl,
     bool clearImageUrl = false,
   }) {
@@ -48,6 +51,7 @@ class Listing {
       ownerName: ownerName,
       createdAt: createdAt,
       imageAsset: imageAsset ?? this.imageAsset,
+      contactInfo: contactInfo ?? this.contactInfo,
       imageUrl: clearImageUrl ? null : imageUrl ?? this.imageUrl,
     );
   }
@@ -70,6 +74,7 @@ class Listing {
           : DateTime.now(),
       imageAsset:
           data['imageAsset'] as String? ?? listingImageForCategory('Diğer'),
+      contactInfo: data['contactInfo'] as String? ?? '',
       imageUrl: data['imageUrl'] as String?,
     );
   }
@@ -85,6 +90,7 @@ class Listing {
       'ownerName': ownerName,
       'createdAt': Timestamp.fromDate(createdAt),
       'imageAsset': imageAsset,
+      'contactInfo': contactInfo,
       if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
     };
   }
@@ -116,6 +122,7 @@ final sampleListings = [
     ownerName: 'Ebranur',
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/cardboard_boxes.svg',
+    contactInfo: '0555 111 22 33',
   ),
   Listing(
     id: 'listing-glass-jars',
@@ -129,6 +136,7 @@ final sampleListings = [
     ownerName: 'Zeynep',
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/glass_jars.svg',
+    contactInfo: '0555 222 33 44',
   ),
   Listing(
     id: 'listing-electronic-parts',
@@ -142,5 +150,6 @@ final sampleListings = [
     ownerName: 'Mert',
     createdAt: DateTime(2026, 9, 2),
     imageAsset: 'assets/images/electronics_parts.svg',
+    contactInfo: '0555 333 44 55',
   ),
 ];

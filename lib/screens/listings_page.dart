@@ -87,6 +87,7 @@ class _ListingsPageState extends State<ListingsPage> {
       listingTitle: listing.title,
       listingAmount: listing.amount,
       listingLocation: listing.location,
+      ownerContactInfo: listing.contactInfo,
       requesterId: _currentUserId ?? user?.uid ?? 'local-user',
       requesterName: _currentUserName ?? 'Ebranur',
       status: ListingRequestStatus.pending,

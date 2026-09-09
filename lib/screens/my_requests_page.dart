@@ -123,6 +123,30 @@ class _RequestCard extends StatelessWidget {
               backgroundColor: statusInfo.color.withValues(alpha: 0.12),
               side: BorderSide.none,
             ),
+            if (request.status == ListingRequestStatus.accepted &&
+                request.ownerContactInfo.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.phone_outlined, color: colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'İlan sahibinin iletişimi: ${request.ownerContactInfo}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

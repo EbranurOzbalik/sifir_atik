@@ -91,6 +91,7 @@ void main() {
       'Temiz ve katlanmış kutular.',
     );
     await tester.enterText(find.byType(TextFormField).at(3), 'Ortahisar');
+    await tester.enterText(find.byType(TextFormField).at(4), '0555 111 22 33');
     await tester.ensureVisible(find.text('İlanı Oluştur'));
     await tester.tap(find.text('İlanı Oluştur'));
     await tester.pump();
@@ -264,7 +265,11 @@ void main() {
     final repository = _FakeListingRepository(
       requests: [
         _testRequest('request-pending', ListingRequestStatus.pending),
-        _testRequest('request-accepted', ListingRequestStatus.accepted),
+        _testRequest(
+          'request-accepted',
+          ListingRequestStatus.accepted,
+          ownerContactInfo: '0555 111 22 33',
+        ),
         _testRequest('request-rejected', ListingRequestStatus.rejected),
       ],
     );
@@ -283,6 +288,38 @@ void main() {
     expect(find.text('Beklemede'), findsOneWidget);
     expect(find.text('Kabul edildi'), findsOneWidget);
     expect(find.text('Reddedildi'), findsOneWidget);
+    expect(
+      find.text('İlan sahibinin iletişimi: 0555 111 22 33'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('owner contact is hidden until request is accepted', (
+    tester,
+  ) async {
+    final repository = _FakeListingRepository(
+      requests: [
+        _testRequest(
+          'request-pending',
+          ListingRequestStatus.pending,
+          ownerContactInfo: '0555 111 22 33',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyRequestsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Beklemede'), findsOneWidget);
+    expect(find.text('İlan sahibinin iletişimi: 0555 111 22 33'), findsNothing);
   });
 
   testWidgets('listings can be searched and filtered', (tester) async {
@@ -318,10 +355,15 @@ Listing _testListing({required String ownerId}) {
     ownerName: 'Ebranur',
     createdAt: DateTime(2026, 9, 8),
     imageAsset: 'assets/images/cardboard_boxes.svg',
+    contactInfo: '0555 111 22 33',
   );
 }
 
-ListingRequest _testRequest(String id, ListingRequestStatus status) {
+ListingRequest _testRequest(
+  String id,
+  ListingRequestStatus status, {
+  String ownerContactInfo = '',
+}) {
   return ListingRequest(
     id: id,
     listingId: 'listing-$id',
@@ -329,6 +371,7 @@ ListingRequest _testRequest(String id, ListingRequestStatus status) {
     listingTitle: 'Karton kutular',
     listingAmount: '10 kg',
     listingLocation: 'Ortahisar',
+    ownerContactInfo: ownerContactInfo,
     requesterId: 'user-1',
     requesterName: 'Zeynep',
     status: status,

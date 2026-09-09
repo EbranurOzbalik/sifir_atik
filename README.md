@@ -37,6 +37,7 @@ olmasını sağlamaya çalıştım.
 - Atık ilanı oluşturma, listeleme ve detay ekranı
 - Galeriden veya kameradan ilan fotoğrafı seçme
 - İlan fotoğrafını güncelleme veya kaldırma
+- İlan sahibinin teslim için iletişim bilgisini ekleyebilmesi
 - Arama ve kategori filtreleriyle ilanları bulma
 - Kullanıcının kendi ilanlarını İlanlarım sayfasında görmesi
 - İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi
@@ -47,6 +48,7 @@ olmasını sağlamaya çalıştım.
 - Gönderilen taleplerin Taleplerim sayfasında görünmesi
 - İlan sahibinin gelen talepleri kabul veya reddetmesi
 - Talep durumunun beklemede, kabul edildi veya reddedildi olarak takip edilmesi
+- Talep kabul edildiğinde ilan sahibinin iletişim bilgisinin görünmesi
 - İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
 ## Uygulamadan ekranlar

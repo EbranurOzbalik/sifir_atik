@@ -41,6 +41,7 @@ void main() {
           title: 'Temiz karton koliler',
           amount: '12 kg',
           location: 'Ortahisar',
+          contactInfo: '0555 999 88 77',
         );
 
         final isUpdated = await repository.updateListing(updatedListing);
@@ -52,6 +53,7 @@ void main() {
         expect(requests.single.listingTitle, 'Temiz karton koliler');
         expect(requests.single.listingAmount, '12 kg');
         expect(requests.single.listingLocation, 'Ortahisar');
+        expect(requests.single.ownerContactInfo, '0555 999 88 77');
       },
     );
 
@@ -143,6 +145,7 @@ Listing _listing({
     ownerName: 'Ebranur',
     createdAt: DateTime(2026, 9, 8),
     imageAsset: 'assets/images/cardboard_boxes.svg',
+    contactInfo: '0555 111 22 33',
     imageUrl: imageUrl,
   );
 }
@@ -160,6 +163,7 @@ ListingRequest _request({
     listingTitle: listingTitle,
     listingAmount: '10 kg',
     listingLocation: 'Trabzon / Ortahisar',
+    ownerContactInfo: '0555 111 22 33',
     requesterId: 'user-1',
     requesterName: 'Zeynep',
     status: ListingRequestStatus.pending,

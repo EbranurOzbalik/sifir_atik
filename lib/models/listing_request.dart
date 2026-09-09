@@ -10,6 +10,7 @@ class ListingRequest {
     required this.listingTitle,
     required this.listingAmount,
     required this.listingLocation,
+    this.ownerContactInfo = '',
     required this.requesterId,
     required this.requesterName,
     required this.status,
@@ -22,6 +23,7 @@ class ListingRequest {
   final String listingTitle;
   final String listingAmount;
   final String listingLocation;
+  final String ownerContactInfo;
   final String requesterId;
   final String requesterName;
   final ListingRequestStatus status;
@@ -41,6 +43,7 @@ class ListingRequest {
       listingTitle: data['listingTitle'] as String? ?? 'İlan bulunamadı',
       listingAmount: data['listingAmount'] as String? ?? '',
       listingLocation: data['listingLocation'] as String? ?? '',
+      ownerContactInfo: data['ownerContactInfo'] as String? ?? '',
       requesterId: data['requesterId'] as String? ?? '',
       requesterName: data['requesterName'] as String? ?? 'Kullanıcı',
       status: ListingRequestStatus.values.firstWhere(
@@ -61,6 +64,7 @@ class ListingRequest {
       listingTitle: listingTitle,
       listingAmount: listingAmount,
       listingLocation: listingLocation,
+      ownerContactInfo: ownerContactInfo,
       requesterId: requesterId,
       requesterName: requesterName,
       status: status ?? this.status,
@@ -75,6 +79,7 @@ class ListingRequest {
       'listingTitle': listingTitle,
       'listingAmount': listingAmount,
       'listingLocation': listingLocation,
+      'ownerContactInfo': ownerContactInfo,
       'requesterId': requesterId,
       'requesterName': requesterName,
       'status': status.name,
