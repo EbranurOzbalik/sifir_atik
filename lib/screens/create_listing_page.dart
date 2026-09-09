@@ -294,6 +294,12 @@ class _CreateListingPageState extends State<CreateListingPage> {
       return 'Firebase Phone giriş yöntemi bu proje için aktif görünmüyor.';
     }
 
+    if (error.code == 'app-not-authorized' ||
+        message.contains('app is not authorized') ||
+        message.contains('invalid app info')) {
+      return 'Android uygulama kimliği henüz Firebase tarafından doğrulanamadı.';
+    }
+
     return switch (error.code) {
       'invalid-phone-number' => 'Geçerli bir telefon numarası girin.',
       'invalid-verification-code' => 'SMS kodu hatalı.',
