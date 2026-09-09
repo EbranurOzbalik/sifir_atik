@@ -33,16 +33,26 @@ class _CreateListingPageState extends State<CreateListingPage> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   final _contactController = TextEditingController();
+  final _smsCodeController = TextEditingController();
   final _listingRepository = const ListingRepository();
   final _photoStorageService = const PhotoStorageService();
   final _imagePicker = ImagePicker();
 
   String? _selectedCategory;
   XFile? _selectedPhoto;
+  String? _verificationId;
+  String? _verifiedPhone;
+  int? _resendToken;
   bool _removeExistingPhoto = false;
   bool _isSaving = false;
+  bool _isSendingCode = false;
+  bool _isVerifyingCode = false;
+  String? _phoneAuthMessage;
 
   bool get _isEditing => widget.listing != null;
+  bool get _isPhoneVerified =>
+      _verifiedPhone != null &&
+      _verifiedPhone == _normalizedPhone(_contactController.text);
 
   @override
   void initState() {
@@ -56,6 +66,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
       _locationController.text = listing.location;
       _contactController.text = listing.contactInfo;
       _selectedCategory = listing.category;
+      _verifiedPhone = _normalizedPhone(listing.contactInfo);
     }
   }
 
@@ -66,6 +77,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
     _descriptionController.dispose();
     _locationController.dispose();
     _contactController.dispose();
+    _smsCodeController.dispose();
     super.dispose();
   }
 
@@ -80,17 +92,205 @@ class _CreateListingPageState extends State<CreateListingPage> {
     final requiredError = _requiredValidator(value);
     if (requiredError != null) return requiredError;
 
-    final phone = value!.replaceAll(RegExp(r'[\s()-]'), '');
-    final isValid =
-        RegExp(r'^05\d{9}$').hasMatch(phone) ||
-        RegExp(r'^\+905\d{9}$').hasMatch(phone) ||
-        RegExp(r'^5\d{9}$').hasMatch(phone);
+    final phone = _normalizedPhone(value!);
+    final isValid = RegExp(r'^\+905\d{9}$').hasMatch(phone);
 
     if (!isValid) {
       return 'Geçerli bir telefon numarası girin.';
     }
 
     return null;
+  }
+
+  String _normalizedPhone(String value) {
+    final phone = value.trim().replaceAll(RegExp(r'[\s()-]'), '');
+
+    if (phone.startsWith('+90')) return phone;
+    if (phone.startsWith('05')) return '+90${phone.substring(1)}';
+    if (phone.startsWith('5')) return '+90$phone';
+
+    return phone;
+  }
+
+  void _onContactChanged(String value) {
+    final phone = _normalizedPhone(value);
+    if (_verifiedPhone == null || _verifiedPhone == phone) return;
+
+    setState(() {
+      _verifiedPhone = null;
+      _verificationId = null;
+      _smsCodeController.clear();
+      _phoneAuthMessage = 'Numara değiştiği için tekrar doğrulama gerekiyor.';
+    });
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+  }
+
+  Future<void> _sendSmsCode() async {
+    final phoneError = _phoneValidator(_contactController.text);
+    if (phoneError != null) {
+      setState(() => _phoneAuthMessage = phoneError);
+      return;
+    }
+
+    if (Firebase.apps.isEmpty) {
+      setState(() {
+        _phoneAuthMessage = 'Firebase bağlantısı hazır değil.';
+      });
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _phoneAuthMessage = 'Telefon doğrulamak için giriş yapmalısınız.';
+      });
+      return;
+    }
+
+    final phone = _normalizedPhone(_contactController.text);
+    if (user.phoneNumber == phone) {
+      setState(() {
+        _verifiedPhone = phone;
+        _phoneAuthMessage = 'Bu numara zaten doğrulanmış.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSendingCode = true;
+      _phoneAuthMessage = 'SMS kodu gönderiliyor...';
+    });
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: phone,
+      forceResendingToken: _resendToken,
+      verificationCompleted: (credential) async {
+        await _confirmPhoneCredential(credential, phone);
+      },
+      verificationFailed: (error) {
+        if (!mounted) return;
+
+        setState(() {
+          _isSendingCode = false;
+          _phoneAuthMessage = _phoneAuthMessageForCode(error.code);
+        });
+      },
+      codeSent: (verificationId, resendToken) {
+        if (!mounted) return;
+
+        setState(() {
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+          _isSendingCode = false;
+          _phoneAuthMessage = 'SMS kodu gönderildi. Gelen kodu yazın.';
+        });
+      },
+      codeAutoRetrievalTimeout: (verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
+  Future<void> _verifySmsCode() async {
+    final verificationId = _verificationId;
+    final smsCode = _smsCodeController.text.trim();
+
+    if (verificationId == null) {
+      setState(() {
+        _phoneAuthMessage = 'Önce SMS kodu gönderin.';
+      });
+      return;
+    }
+
+    if (smsCode.length < 6) {
+      setState(() {
+        _phoneAuthMessage = 'SMS kodunu eksiksiz girin.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isVerifyingCode = true;
+      _phoneAuthMessage = 'Kod kontrol ediliyor...';
+    });
+
+    final credential = PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+
+    await _confirmPhoneCredential(
+      credential,
+      _normalizedPhone(_contactController.text),
+    );
+  }
+
+  Future<void> _confirmPhoneCredential(
+    PhoneAuthCredential credential,
+    String phone,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSendingCode = false;
+        _isVerifyingCode = false;
+        _phoneAuthMessage = 'Telefon doğrulamak için giriş yapmalısınız.';
+      });
+      return;
+    }
+
+    try {
+      if (user.phoneNumber == phone) {
+        await user.reload();
+      } else if (user.phoneNumber == null) {
+        await user.linkWithCredential(credential);
+      } else {
+        await user.updatePhoneNumber(credential);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _verifiedPhone = phone;
+        _isSendingCode = false;
+        _isVerifyingCode = false;
+        _phoneAuthMessage = 'Telefon numarası doğrulandı.';
+      });
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSendingCode = false;
+        _isVerifyingCode = false;
+        _phoneAuthMessage = _phoneAuthMessageForCode(error.code);
+      });
+    }
+  }
+
+  String _phoneAuthMessageForCode(String code) {
+    return switch (code) {
+      'invalid-phone-number' => 'Geçerli bir telefon numarası girin.',
+      'invalid-verification-code' => 'SMS kodu hatalı.',
+      'credential-already-in-use' =>
+        'Bu telefon başka bir hesapta kullanılıyor.',
+      'too-many-requests' => 'Çok fazla deneme yapıldı, biraz sonra deneyin.',
+      'quota-exceeded' => 'SMS kotası dolmuş görünüyor.',
+      'network-request-failed' => 'İnternet bağlantısını kontrol edin.',
+      'requires-recent-login' =>
+        'Telefonu güncellemek için tekrar giriş yapın.',
+      _ => 'Telefon doğrulaması tamamlanamadı.',
+    };
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -159,6 +359,13 @@ class _CreateListingPageState extends State<CreateListingPage> {
   Future<void> _submitDraft() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (Firebase.apps.isNotEmpty && !_isPhoneVerified) {
+      setState(() {
+        _phoneAuthMessage = 'İlan açmak için telefon numarasını doğrulayın.';
+      });
+      _showMessage('İlan açmak için telefon numarasını doğrulayın.');
+      return;
+    }
 
     setState(() => _isSaving = true);
 
@@ -391,15 +598,27 @@ class _CreateListingPageState extends State<CreateListingPage> {
                     const SizedBox(height: 18),
                     TextFormField(
                       controller: _contactController,
-                      textInputAction: TextInputAction.done,
+                      textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.phone,
                       validator: _phoneValidator,
+                      onChanged: _onContactChanged,
                       decoration: const InputDecoration(
-                        labelText: 'İletişim bilgisi',
+                        labelText: 'Telefon numarası',
                         hintText: 'Örn. 0555 111 22 33',
                         prefixIcon: Icon(Icons.phone_outlined),
                         border: OutlineInputBorder(),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    _PhoneVerificationCard(
+                      isVerified: _isPhoneVerified,
+                      isSendingCode: _isSendingCode,
+                      isVerifyingCode: _isVerifyingCode,
+                      verificationId: _verificationId,
+                      message: _phoneAuthMessage,
+                      smsCodeController: _smsCodeController,
+                      onSendCode: _sendSmsCode,
+                      onVerifyCode: _verifySmsCode,
                     ),
                     const SizedBox(height: 28),
                     FilledButton.icon(
@@ -427,6 +646,128 @@ class _CreateListingPageState extends State<CreateListingPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PhoneVerificationCard extends StatelessWidget {
+  const _PhoneVerificationCard({
+    required this.isVerified,
+    required this.isSendingCode,
+    required this.isVerifyingCode,
+    required this.verificationId,
+    required this.message,
+    required this.smsCodeController,
+    required this.onSendCode,
+    required this.onVerifyCode,
+  });
+
+  final bool isVerified;
+  final bool isSendingCode;
+  final bool isVerifyingCode;
+  final String? verificationId;
+  final String? message;
+  final TextEditingController smsCodeController;
+  final VoidCallback onSendCode;
+  final VoidCallback onVerifyCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isVerified
+            ? colorScheme.primaryContainer.withValues(alpha: 0.45)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isVerified
+              ? colorScheme.primary.withValues(alpha: 0.4)
+              : colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isVerified ? Icons.verified_user_outlined : Icons.sms_outlined,
+                color: isVerified ? colorScheme.primary : colorScheme.outline,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isVerified
+                      ? 'Telefon doğrulandı'
+                      : 'İlan için SMS doğrulaması',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isVerified
+                ? 'Talep kabul edilince bu numara karşı tarafa gösterilir.'
+                : 'Numaranıza gelen kod onaylanmadan ilan yayınlanmaz.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: isSendingCode || isVerifyingCode ? null : onSendCode,
+            icon: isSendingCode
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send_to_mobile_outlined),
+            label: Text(
+              verificationId == null ? 'SMS Kodu Gönder' : 'Kodu Tekrar Gönder',
+            ),
+          ),
+          if (verificationId != null && !isVerified) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: smsCodeController,
+              textInputAction: TextInputAction.done,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'SMS kodu',
+                hintText: '6 haneli kod',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: isSendingCode || isVerifyingCode ? null : onVerifyCode,
+              icon: isVerifyingCode
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle_outline),
+              label: const Text('Kodu Onayla'),
+            ),
+          ],
+          if (message != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              message!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isVerified ? colorScheme.primary : colorScheme.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

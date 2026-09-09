@@ -37,7 +37,7 @@ olmasını sağlamaya çalıştım.
 - Atık ilanı oluşturma, listeleme ve detay ekranı
 - Galeriden veya kameradan ilan fotoğrafı seçme
 - İlan fotoğrafını güncelleme veya kaldırma
-- İlan sahibinin teslim için geçerli telefon numarası ekleyebilmesi
+- İlan oluştururken telefon numarasının SMS koduyla doğrulanması
 - Arama ve kategori filtreleriyle ilanları bulma
 - Kullanıcının kendi ilanlarını İlanlarım sayfasında görmesi
 - İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi
@@ -48,7 +48,7 @@ olmasını sağlamaya çalıştım.
 - Gönderilen taleplerin Taleplerim sayfasında görünmesi
 - İlan sahibinin gelen talepleri kabul veya reddetmesi
 - Talep durumunun beklemede, kabul edildi veya reddedildi olarak takip edilmesi
-- Talep kabul edildiğinde ilan sahibinin iletişim bilgisinin görünmesi
+- Talep kabul edildiğinde doğrulanan telefon numarasının görünmesi
 - İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
 ## Uygulamadan ekranlar
@@ -103,19 +103,20 @@ deniyorum. Ayrıca kullanıcının kendi ilanına talep gönderememesi, başarı
 talep işleminde yanlışlıkla başarılı mesaj gösterilmemesi, fotoğraf kaldırma ve
 talep durumlarının ekranda doğru görünmesi de test ediliyor.
 
-Gerçek kayıt olma, Google ile giriş, fotoğraf yükleme ve iki farklı kullanıcıyla
-baştan sona çalışan talep akışı için ileride ayrıca entegrasyon testleri
-eklenebilir. Bu kısımları şimdilik Android emülatör üzerinde manuel olarak
-kontrol ediyorum.
+Gerçek kayıt olma, Google ile giriş, SMS doğrulaması, fotoğraf yükleme ve iki
+farklı kullanıcıyla baştan sona çalışan talep akışı için ileride ayrıca
+entegrasyon testleri eklenebilir. Bu kısımları şimdilik Android emülatör
+üzerinde manuel olarak kontrol ediyorum.
 
 ## Manuel test senaryosu
 
 Android emülatörde iki farklı kullanıcıyla şu akışı kontrol ettim:
 
 1. İlk kullanıcıyla giriş yapıp örnek bir ilan oluşturdum.
-2. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
-3. İlk kullanıcıyla tekrar giriş yapıp gelen talebi İlanlarım ekranında gördüm.
-4. Talebi kabul ettiğimde ikinci kullanıcının Taleplerim ekranında durumun
+2. İlan oluştururken telefon numarasına gelen SMS kodunu doğruladım.
+3. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
+4. İlk kullanıcıyla tekrar giriş yapıp gelen talebi İlanlarım ekranında gördüm.
+5. Talebi kabul ettiğimde ikinci kullanıcının Taleplerim ekranında durumun
    güncellendiğini kontrol ettim.
 
 ## Proje durumu
