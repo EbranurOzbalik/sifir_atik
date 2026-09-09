@@ -179,9 +179,13 @@ class _CreateListingPageState extends State<CreateListingPage> {
       verificationFailed: (error) {
         if (!mounted) return;
 
+        debugPrint(
+          'Telefon doğrulama hatası: ${error.code} - ${error.message}',
+        );
+
         setState(() {
           _isSendingCode = false;
-          _phoneAuthMessage = _phoneAuthMessageForCode(error.code);
+          _phoneAuthMessage = _phoneAuthMessageForError(error);
         });
       },
       codeSent: (verificationId, resendToken) {
@@ -270,16 +274,27 @@ class _CreateListingPageState extends State<CreateListingPage> {
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
 
+      debugPrint('SMS kodu onaylama hatası: ${error.code} - ${error.message}');
+
       setState(() {
         _isSendingCode = false;
         _isVerifyingCode = false;
-        _phoneAuthMessage = _phoneAuthMessageForCode(error.code);
+        _phoneAuthMessage = _phoneAuthMessageForError(error);
       });
     }
   }
 
-  String _phoneAuthMessageForCode(String code) {
-    return switch (code) {
+  String _phoneAuthMessageForError(FirebaseAuthException error) {
+    final message = error.message?.toLowerCase() ?? '';
+
+    if (error.code == 'operation-not-allowed' ||
+        error.code == '17006' ||
+        message.contains('operation is not allowed') ||
+        message.contains('provider is disabled')) {
+      return 'Firebase Phone giriş yöntemi bu proje için aktif görünmüyor.';
+    }
+
+    return switch (error.code) {
       'invalid-phone-number' => 'Geçerli bir telefon numarası girin.',
       'invalid-verification-code' => 'SMS kodu hatalı.',
       'credential-already-in-use' =>
