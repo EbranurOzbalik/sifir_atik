@@ -37,7 +37,7 @@ olmasını sağlamaya çalıştım.
 - Atık ilanı oluşturma, listeleme ve detay ekranı
 - Galeriden veya kameradan ilan fotoğrafı seçme
 - İlan fotoğrafını güncelleme veya kaldırma
-- İlan sahibinin teslim için iletişim bilgisini ekleyebilmesi
+- İlan sahibinin teslim için geçerli telefon numarası ekleyebilmesi
 - Arama ve kategori filtreleriyle ilanları bulma
 - Kullanıcının kendi ilanlarını İlanlarım sayfasında görmesi
 - İlan sahibinin kendi ilanlarını düzenleyebilmesi ve silebilmesi

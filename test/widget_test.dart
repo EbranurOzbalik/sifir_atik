@@ -99,6 +99,32 @@ void main() {
     expect(find.text('İlan taslak olarak kaldı.'), findsOneWidget);
   });
 
+  testWidgets('create listing requires a valid phone number', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    await tester.tap(find.text('Atık İlanı Ver'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Karton Kutular');
+    await tester.tap(find.text('Kategori'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kağıt').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(1), '10 kg');
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      'Temiz ve katlanmış kutular.',
+    );
+    await tester.enterText(find.byType(TextFormField).at(3), 'Ortahisar');
+    await tester.enterText(find.byType(TextFormField).at(4), '123');
+    await tester.ensureVisible(find.text('İlanı Oluştur'));
+    await tester.tap(find.text('İlanı Oluştur'));
+    await tester.pump();
+
+    expect(find.text('Geçerli bir telefon numarası girin.'), findsOneWidget);
+    expect(find.text('İlan taslak olarak kaldı.'), findsNothing);
+  });
+
   testWidgets('edit listing form opens with listing values', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: CreateListingPage(listing: sampleListings.first)),

@@ -76,6 +76,23 @@ class _CreateListingPageState extends State<CreateListingPage> {
     return null;
   }
 
+  String? _phoneValidator(String? value) {
+    final requiredError = _requiredValidator(value);
+    if (requiredError != null) return requiredError;
+
+    final phone = value!.replaceAll(RegExp(r'[\s()-]'), '');
+    final isValid =
+        RegExp(r'^05\d{9}$').hasMatch(phone) ||
+        RegExp(r'^\+905\d{9}$').hasMatch(phone) ||
+        RegExp(r'^5\d{9}$').hasMatch(phone);
+
+    if (!isValid) {
+      return 'Geçerli bir telefon numarası girin.';
+    }
+
+    return null;
+  }
+
   Future<void> _pickPhoto(ImageSource source) async {
     final photo = await _imagePicker.pickImage(
       source: source,
@@ -376,10 +393,10 @@ class _CreateListingPageState extends State<CreateListingPage> {
                       controller: _contactController,
                       textInputAction: TextInputAction.done,
                       keyboardType: TextInputType.phone,
-                      validator: _requiredValidator,
+                      validator: _phoneValidator,
                       decoration: const InputDecoration(
                         labelText: 'İletişim bilgisi',
-                        hintText: 'Telefon numarası veya kısa not',
+                        hintText: 'Örn. 0555 111 22 33',
                         prefixIcon: Icon(Icons.phone_outlined),
                         border: OutlineInputBorder(),
                       ),
