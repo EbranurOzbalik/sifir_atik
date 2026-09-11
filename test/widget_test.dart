@@ -315,9 +315,11 @@ void main() {
     expect(find.text('Kabul edildi'), findsOneWidget);
     expect(find.text('Reddedildi'), findsOneWidget);
     expect(
-      find.text('İlan sahibinin iletişimi: 0555 111 22 33'),
+      find.text('İlan sahibinin telefonu: 0555 111 22 33'),
       findsOneWidget,
     );
+    expect(find.text('Ara'), findsOneWidget);
+    expect(find.text("WhatsApp'tan yaz"), findsOneWidget);
   });
 
   testWidgets('owner contact is hidden until request is accepted', (
@@ -345,7 +347,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Beklemede'), findsOneWidget);
-    expect(find.text('İlan sahibinin iletişimi: 0555 111 22 33'), findsNothing);
+    expect(find.text('İlan sahibinin telefonu: 0555 111 22 33'), findsNothing);
+    expect(find.text('Ara'), findsNothing);
+    expect(find.text("WhatsApp'tan yaz"), findsNothing);
   });
 
   testWidgets('listings can be searched and filtered', (tester) async {

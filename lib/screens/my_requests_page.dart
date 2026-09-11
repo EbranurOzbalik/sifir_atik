@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyRequestsPage extends StatelessWidget {
   const MyRequestsPage({
@@ -84,6 +85,62 @@ class _RequestCard extends StatelessWidget {
   final String listingTitle;
   final String listingInfo;
 
+  String get _phoneForLink {
+    final phone = request.ownerContactInfo.trim().replaceAll(
+      RegExp(r'[\s()-]'),
+      '',
+    );
+
+    if (phone.startsWith('+')) return phone;
+    if (phone.startsWith('0')) return '+90${phone.substring(1)}';
+    if (phone.startsWith('5')) return '+90$phone';
+
+    return phone;
+  }
+
+  Future<void> _openPhone(BuildContext context) async {
+    await _openUrl(
+      ScaffoldMessenger.of(context),
+      Uri(scheme: 'tel', path: _phoneForLink),
+    );
+  }
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final phone = _phoneForLink.replaceFirst('+', '');
+    final message = Uri.encodeComponent(
+      'Merhaba, Sıfır Atık uygulamasındaki "$listingTitle" ilanınız için yazıyorum.',
+    );
+
+    final whatsappUri = Uri.parse('whatsapp://send?phone=$phone&text=$message');
+    final webUri = Uri.parse('https://wa.me/$phone?text=$message');
+
+    if (await canLaunchUrl(whatsappUri)) {
+      final opened = await launchUrl(
+        whatsappUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened) return;
+    }
+
+    await _openUrl(messenger, webUri);
+  }
+
+  Future<void> _openUrl(ScaffoldMessengerState messenger, Uri uri) async {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (opened) return;
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('İletişim uygulaması açılamadı.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -133,15 +190,37 @@ class _RequestCard extends StatelessWidget {
                   color: colorScheme.primaryContainer.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.phone_outlined, color: colorScheme.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'İlan sahibinin iletişimi: ${request.ownerContactInfo}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, color: colorScheme.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'İlan sahibinin telefonu: ${request.ownerContactInfo}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _openPhone(context),
+                          icon: const Icon(Icons.call_outlined),
+                          label: const Text('Ara'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () => _openWhatsApp(context),
+                          icon: const Icon(Icons.chat_outlined),
+                          label: const Text("WhatsApp'tan yaz"),
+                        ),
+                      ],
                     ),
                   ],
                 ),

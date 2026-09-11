@@ -48,7 +48,8 @@ olmasını sağlamaya çalıştım.
 - Gönderilen taleplerin Taleplerim sayfasında görünmesi
 - İlan sahibinin gelen talepleri kabul veya reddetmesi
 - Talep durumunun beklemede, kabul edildi veya reddedildi olarak takip edilmesi
-- Talep kabul edildiğinde doğrulanan telefon numarasının görünmesi
+- Talep kabul edilince ilan sahibinin doğrulanan telefon numarasını görme,
+  arama veya WhatsApp üzerinden yazma
 - İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
 ## Uygulamadan ekranlar
@@ -72,6 +73,10 @@ olmasını sağlamaya çalıştım.
 | Taleplerim | Profilim |
 | --- | --- |
 | <img src="screenshots/09-my-requests.png" width="260" alt="Taleplerim ekranı"> | <img src="screenshots/10-profile.png" width="260" alt="Profilim ekranı"> |
+
+| Kabul edilen talep |
+| --- |
+| <img src="screenshots/11-contact-options.png" width="260" alt="Kabul edilen talepte iletişim seçenekleri"> |
 
 ## Projeyi Çalıştırma
 
@@ -117,7 +122,7 @@ Android emülatörde iki farklı kullanıcıyla şu akışı kontrol ettim:
 3. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
 4. İlk kullanıcıyla tekrar giriş yapıp gelen talebi İlanlarım ekranında gördüm.
 5. Talebi kabul ettiğimde ikinci kullanıcının Taleplerim ekranında durumun
-   güncellendiğini kontrol ettim.
+   güncellendiğini ve iletişim seçeneklerinin açıldığını kontrol ettim.
 
 ## Proje durumu
 
