@@ -48,8 +48,9 @@ olmasını sağlamaya çalıştım.
 - Gönderilen taleplerin Taleplerim sayfasında görünmesi
 - İlan sahibinin gelen talepleri kabul veya reddetmesi
 - Talep durumunun beklemede, kabul edildi veya reddedildi olarak takip edilmesi
-- Talep kabul edilince ilan sahibinin doğrulanan telefon numarasını görme,
-  arama veya WhatsApp üzerinden yazma
+- Talep kabul edilince iletişim bilgilerinin açılması
+- Kabul edilen taleplerde ilan sahibini doğrudan arama veya WhatsApp üzerinden
+  mesaj gönderme
 - İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
 ## Uygulamadan ekranlar
@@ -70,13 +71,9 @@ olmasını sağlamaya çalıştım.
 | --- | --- |
 | <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> | <img src="screenshots/08-my-listings.png" width="260" alt="İlanlarım ekranı"> |
 
-| Taleplerim | Profilim |
-| --- | --- |
-| <img src="screenshots/09-my-requests.png" width="260" alt="Taleplerim ekranı"> | <img src="screenshots/10-profile.png" width="260" alt="Profilim ekranı"> |
-
-| Kabul edilen talep |
-| --- |
-| <img src="screenshots/11-contact-options.png" width="260" alt="Kabul edilen talepte iletişim seçenekleri"> |
+| Taleplerim | Kabul sonrası iletişim | Profilim |
+| --- | --- | --- |
+| <img src="screenshots/09-my-requests.png" width="240" alt="Taleplerim ekranı"> | <img src="screenshots/11-contact-options.png" width="240" alt="Kabul sonrası iletişim seçenekleri"> | <img src="screenshots/10-profile.png" width="240" alt="Profilim ekranı"> |
 
 ## Projeyi Çalıştırma
 
@@ -122,7 +119,10 @@ Android emülatörde iki farklı kullanıcıyla şu akışı kontrol ettim:
 3. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
 4. İlk kullanıcıyla tekrar giriş yapıp gelen talebi İlanlarım ekranında gördüm.
 5. Talebi kabul ettiğimde ikinci kullanıcının Taleplerim ekranında durumun
-   güncellendiğini ve iletişim seçeneklerinin açıldığını kontrol ettim.
+   güncellendiğini kontrol ettim.
+6. Talep kabul edildikten sonra telefon numarası görünür hale geldi. Kullanıcı
+   isterse ilan sahibini arayabiliyor, isterse WhatsApp üzerinden hazır mesajla
+   iletişime geçebiliyor.
 
 ## Proje durumu
 
