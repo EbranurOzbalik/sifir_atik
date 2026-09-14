@@ -4,7 +4,7 @@ import 'create_listing_page.dart';
 import 'listings_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
-import 'profile_page.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -14,99 +14,95 @@ class HomePage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sıfır Atık'),
-        centerTitle: false,
-        backgroundColor: colorScheme.surface,
-        actions: [
-          IconButton(
-            tooltip: 'Profilim',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
-              );
-            },
-            icon: const Icon(Icons.person_outline),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Sıfır Atık')),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useHorizontalLayout = constraints.maxWidth >= 600;
-            final createListingCard = _ActionCard(
-              icon: Icons.add_photo_alternate_outlined,
-              title: 'Atık İlanı Ver',
-              description:
-                  'Değerlendirilebilir atıklarınız için yeni bir ilan oluşturun.',
-              color: colorScheme.primary,
-              backgroundColor: colorScheme.primaryContainer,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const CreateListingPage(),
-                  ),
-                );
-              },
-            );
-            final viewListingsCard = _ActionCard(
-              icon: Icons.view_list_outlined,
-              title: 'İlanları Gör',
-              description: 'Paylaşılan atık ilanlarını keşfedin ve inceleyin.',
-              color: colorScheme.tertiary,
-              backgroundColor: colorScheme.tertiaryContainer,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const ListingsPage()),
-                );
-              },
-            );
-            final myListingsCard = _ActionCard(
-              icon: Icons.inventory_2_outlined,
-              title: 'İlanlarım',
-              description: 'Paylaştığım ilanları ve gelen talepleri takip et.',
-              color: colorScheme.secondary,
-              backgroundColor: colorScheme.secondaryContainer,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const MyListingsPage(),
-                  ),
-                );
-              },
-            );
-            final myRequestsCard = _ActionCard(
-              icon: Icons.handshake_outlined,
-              title: 'Taleplerim',
-              description: 'İlgilendiğim ilanların son durumunu gör.',
-              color: colorScheme.primary,
-              backgroundColor: colorScheme.primaryContainer,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const MyRequestsPage(),
-                  ),
-                );
-              },
-            );
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colorScheme.primaryContainer.withValues(alpha: 0.28),
+                colorScheme.surface,
+              ],
+            ),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useHorizontalLayout = constraints.maxWidth >= 600;
+              final createListingCard = _ActionCard(
+                icon: Icons.add_photo_alternate_outlined,
+                title: 'Atık İlanı Ver',
+                description: 'Fotoğraf ekle ve ilanını paylaş.',
+                color: colorScheme.primary,
+                backgroundColor: colorScheme.primaryContainer,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const CreateListingPage(),
+                    ),
+                  );
+                },
+              );
+              final viewListingsCard = _ActionCard(
+                icon: Icons.view_list_outlined,
+                title: 'İlanları Gör',
+                description: 'Çevrendeki atık ilanlarını keşfet.',
+                color: colorScheme.tertiary,
+                backgroundColor: colorScheme.tertiaryContainer,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ListingsPage(),
+                    ),
+                  );
+                },
+              );
+              final myListingsCard = _ActionCard(
+                icon: Icons.inventory_2_outlined,
+                title: 'İlanlarım',
+                description: 'Paylaştığım ilanları yönet.',
+                color: colorScheme.secondary,
+                backgroundColor: colorScheme.secondaryContainer,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MyListingsPage(),
+                    ),
+                  );
+                },
+              );
+              final myRequestsCard = _ActionCard(
+                icon: Icons.handshake_outlined,
+                title: 'Taleplerim',
+                description: 'Gönderdiğin talepleri takip et.',
+                color: colorScheme.primary,
+                backgroundColor: colorScheme.primaryContainer,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MyRequestsPage(),
+                    ),
+                  );
+                },
+              );
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
+              return SingleChildScrollView(
+                padding: responsivePagePadding(context, top: 10),
+                child: ResponsiveContent(
+                  maxWidth: 900,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _WelcomeSection(colorScheme: colorScheme),
-                      const SizedBox(height: 32),
+                      _HomeHeader(colorScheme: colorScheme),
+                      const SizedBox(height: 28),
                       Text(
                         'Ne yapmak istersiniz?',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       if (useHorizontalLayout)
                         Column(
                           children: [
@@ -134,80 +130,71 @@ class HomePage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             createListingCard,
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
                             viewListingsCard,
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
                             myListingsCard,
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
                             myRequestsCard,
                           ],
                         ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-class _WelcomeSection extends StatelessWidget {
-  const _WelcomeSection({required this.colorScheme});
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader({required this.colorScheme});
 
   final ColorScheme colorScheme;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/images/zero_waste_logo.png',
-              semanticLabel: 'Sıfır atık logosu',
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hoş geldiniz!',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hoş geldiniz',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Atıkları birlikte dönüştürelim, geleceği birlikte koruyalım.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onPrimaryContainer,
-                    height: 1.35,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Atık ilanlarını ve taleplerini buradan takip edebilirsin.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.35,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 18),
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withValues(alpha: 0.75),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.recycling_rounded,
+            color: colorScheme.primary,
+            size: 34,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -231,38 +218,120 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      color: backgroundColor,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 40, color: color),
-              const SizedBox(height: 24),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(Icons.arrow_forward_rounded, color: color),
-              ),
-            ],
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.14),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(26),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                backgroundColor.withValues(alpha: 0.88),
+                colorScheme.surfaceContainerLow,
+              ],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 340;
+              final padding = isNarrow ? 16.0 : 20.0;
+              final iconSize = isNarrow ? 48.0 : 56.0;
+              final arrowSize = isNarrow ? 32.0 : 36.0;
+
+              return InkWell(
+                onTap: onTap,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: isNarrow ? 100 : 108),
+                  child: Padding(
+                    padding: EdgeInsets.all(padding),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: iconSize,
+                          height: iconSize,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(
+                              isNarrow ? 16 : 18,
+                            ),
+                          ),
+                          child: Icon(
+                            icon,
+                            size: isNarrow ? 26 : 30,
+                            color: color,
+                          ),
+                        ),
+                        SizedBox(width: isNarrow ? 12 : 16),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    (isNarrow
+                                            ? Theme.of(
+                                                context,
+                                              ).textTheme.titleSmall
+                                            : Theme.of(
+                                                context,
+                                              ).textTheme.titleMedium)
+                                        ?.copyWith(fontWeight: FontWeight.w900),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: isNarrow ? 8 : 12),
+                        Container(
+                          width: arrowSize,
+                          height: arrowSize,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            color: color,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),

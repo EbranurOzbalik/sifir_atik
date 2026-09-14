@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 typedef InterestChangedCallback = Future<ListingRequest?> Function();
 
@@ -187,67 +188,69 @@ class _ListingsPageState extends State<ListingsPage> {
 
   Widget _buildListingsContent(BuildContext context) {
     final filteredListings = _filteredListings;
+    final horizontalPadding = responsiveHorizontalPadding(context);
 
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            16,
+            horizontalPadding,
+            12,
+          ),
           sliver: SliverToBoxAdapter(
-            child: TextField(
-              controller: _searchController,
-              textInputAction: TextInputAction.search,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: 'İlanlarda ara',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isEmpty
-                    ? const Icon(Icons.tune)
-                    : IconButton(
-                        tooltip: 'Aramayı temizle',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                        icon: const Icon(Icons.close),
-                      ),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+            child: ResponsiveContent(
+              child: TextField(
+                controller: _searchController,
+                textInputAction: TextInputAction.search,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'İlanlarda ara',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? const Icon(Icons.tune)
+                      : IconButton(
+                          tooltip: 'Aramayı temizle',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.close),
+                        ),
                 ),
               ),
             ),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           sliver: SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _categories
-                    .map(
-                      (category) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          selected: category == _selectedCategory,
-                          onSelected: (_) {
-                            setState(() => _selectedCategory = category);
-                          },
-                          label: Text(category),
+            child: ResponsiveContent(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _categories
+                      .map(
+                        (category) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            selected: category == _selectedCategory,
+                            onSelected: (_) {
+                              setState(() => _selectedCategory = category);
+                            },
+                            label: Text(category),
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
+                      )
+                      .toList(),
+                ),
               ),
             ),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.all(20),
+          padding: responsivePagePadding(context, top: 20),
           sliver: filteredListings.isEmpty
               ? const SliverToBoxAdapter(child: _EmptyListingsMessage())
               : SliverList.separated(
@@ -255,10 +258,12 @@ class _ListingsPageState extends State<ListingsPage> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final listing = filteredListings[index];
-                    return _ListingCard(
-                      listing: listing,
-                      request: _requestsByListingId[listing.id],
-                      onTap: () => _openListingDetail(listing),
+                    return ResponsiveContent(
+                      child: _ListingCard(
+                        listing: listing,
+                        request: _requestsByListingId[listing.id],
+                        onTap: () => _openListingDetail(listing),
+                      ),
                     );
                   },
                 ),
@@ -364,12 +369,22 @@ class _ListingCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              SizedBox(
+              Container(
                 width: 80,
                 height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _listingColor(listing).withValues(alpha: 0.12),
+                      blurRadius: 14,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: _ListingImage(
                   listing: listing,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   padding: const EdgeInsets.all(10),
                 ),
               ),
@@ -387,14 +402,24 @@ class _ListingCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      listing.category,
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _ListingBadge(
+                          icon: Icons.category_outlined,
+                          label: listing.category,
+                          color: _listingColor(listing),
+                        ),
+                        if (statusInfo != null)
+                          _ListingBadge(
+                            icon: statusInfo.icon,
+                            label: statusInfo.label,
+                            color: statusInfo.color,
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
@@ -435,20 +460,11 @@ class _ListingCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (statusInfo != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Talep durumu: ${statusInfo.label}',
-                        style: TextStyle(
-                          color: statusInfo.color,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -498,96 +514,94 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
       appBar: AppBar(title: const Text('İlan Detayı')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    height: 180,
-                    child: _ListingImage(
-                      listing: listing,
-                      borderRadius: BorderRadius.circular(20),
-                      padding: const EdgeInsets.all(20),
+          padding: responsivePagePadding(context, top: 20),
+          child: ResponsiveContent(
+            maxWidth: kFormContentMaxWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 180,
+                  child: _ListingImage(
+                    listing: listing,
+                    borderRadius: BorderRadius.circular(20),
+                    padding: const EdgeInsets.all(20),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  listing.title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${listing.ownerName} tarafından paylaşıldı',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _InfoChip(
+                      icon: Icons.category_outlined,
+                      label: listing.category,
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    listing.title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    _InfoChip(
+                      icon: Icons.scale_outlined,
+                      label: listing.amount,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${listing.ownerName} tarafından paylaşıldı',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _InfoChip(
-                        icon: Icons.category_outlined,
-                        label: listing.category,
-                      ),
-                      _InfoChip(
-                        icon: Icons.scale_outlined,
-                        label: listing.amount,
-                      ),
-                      _InfoChip(
-                        icon: Icons.location_on_outlined,
-                        label: listing.location,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    'Açıklama',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    _InfoChip(
+                      icon: Icons.location_on_outlined,
+                      label: listing.location,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    listing.description,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(height: 1.45),
-                  ),
-                  const SizedBox(height: 32),
-                  if (_request != null) ...[
-                    _RequestStatusCard(request: _request!),
-                    const SizedBox(height: 16),
                   ],
-                  FilledButton.icon(
-                    onPressed: _isChangingRequest ? null : _toggleInterest,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(54),
-                      backgroundColor: _request != null
-                          ? colorScheme.secondary
-                          : colorScheme.primary,
-                    ),
-                    icon: Icon(
-                      _isChangingRequest
-                          ? Icons.hourglass_empty
-                          : _request != null
-                          ? Icons.check_circle_outline
-                          : Icons.volunteer_activism_outlined,
-                    ),
-                    label: Text(
-                      _isChangingRequest
-                          ? 'İşleniyor...'
-                          : _request != null
-                          ? 'Talebi Geri Al'
-                          : 'İlgileniyorum',
-                    ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'Açıklama',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  listing.description,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(height: 1.45),
+                ),
+                const SizedBox(height: 32),
+                if (_request != null) ...[
+                  _RequestStatusCard(request: _request!),
+                  const SizedBox(height: 16),
                 ],
-              ),
+                FilledButton.icon(
+                  onPressed: _isChangingRequest ? null : _toggleInterest,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(54),
+                    backgroundColor: _request != null
+                        ? colorScheme.secondary
+                        : colorScheme.primary,
+                  ),
+                  icon: Icon(
+                    _isChangingRequest
+                        ? Icons.hourglass_empty
+                        : _request != null
+                        ? Icons.check_circle_outline
+                        : Icons.volunteer_activism_outlined,
+                  ),
+                  label: Text(
+                    _isChangingRequest
+                        ? 'İşleniyor...'
+                        : _request != null
+                        ? 'Talebi Geri Al'
+                        : 'İlgileniyorum',
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -672,6 +686,43 @@ class _InfoChip extends StatelessWidget {
       label: Text(label),
       backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.4),
       side: BorderSide.none,
+    );
+  }
+}
+
+class _ListingBadge extends StatelessWidget {
+  const _ListingBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

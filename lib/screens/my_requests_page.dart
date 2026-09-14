@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyRequestsPage extends StatelessWidget {
@@ -53,17 +54,19 @@ class MyRequestsPage extends StatelessWidget {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.all(20),
+                    padding: responsivePagePadding(context, top: 20),
                     itemCount: requests.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final request = requests[index];
 
-                      return _RequestCard(
-                        request: request,
-                        listingTitle: request.listingTitle,
-                        listingInfo:
-                            '${request.listingAmount} • ${request.listingLocation}',
+                      return ResponsiveContent(
+                        child: _RequestCard(
+                          request: request,
+                          listingTitle: request.listingTitle,
+                          listingInfo:
+                              '${request.listingAmount} • ${request.listingLocation}',
+                        ),
                       );
                     },
                   );
@@ -185,14 +188,25 @@ class _RequestCard extends StatelessWidget {
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.18),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'İletişim bilgisi açıldı',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(Icons.phone_outlined, color: colorScheme.primary),
@@ -206,19 +220,24 @@ class _RequestCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: () => _openPhone(context),
-                          icon: const Icon(Icons.call_outlined),
-                          label: const Text('Ara'),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openPhone(context),
+                            icon: const Icon(Icons.call_outlined),
+                            label: const FittedBox(child: Text('Ara')),
+                          ),
                         ),
-                        FilledButton.icon(
-                          onPressed: () => _openWhatsApp(context),
-                          icon: const Icon(Icons.chat_outlined),
-                          label: const Text("WhatsApp'tan yaz"),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: () => _openWhatsApp(context),
+                            icon: const Icon(Icons.chat_outlined),
+                            label: const FittedBox(
+                              child: Text("WhatsApp'tan yaz"),
+                            ),
+                          ),
                         ),
                       ],
                     ),

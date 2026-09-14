@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 class CreateListingPage extends StatefulWidget {
   const CreateListingPage({super.key, this.listing});
@@ -505,164 +506,163 @@ class _CreateListingPageState extends State<CreateListingPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: responsivePagePadding(context, top: 20),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      _isEditing
-                          ? 'İlan bilgilerini düzenle'
-                          : 'Yeni ilan oluştur',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+          child: ResponsiveContent(
+            maxWidth: kFormContentMaxWidth,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    _isEditing
+                        ? 'İlan bilgilerini düzenle'
+                        : 'Yeni ilan oluştur',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isEditing
-                          ? 'İlanınızın görünen bilgilerini buradan değiştirebilirsiniz.'
-                          : 'Atığınızla ilgili temel bilgileri ekleyin.',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isEditing
+                        ? 'İlanınızın görünen bilgilerini buradan değiştirebilirsiniz.'
+                        : 'Atığınızla ilgili temel bilgileri ekleyin.',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 28),
+                  _PhotoPickerCard(
+                    colorScheme: colorScheme,
+                    selectedPhoto: _selectedPhoto,
+                    imageUrl: _removeExistingPhoto
+                        ? null
+                        : widget.listing?.imageUrl,
+                    onTap: _showPhotoOptions,
+                    onRemove:
+                        _selectedPhoto == null &&
+                            (widget.listing?.imageUrl == null ||
+                                widget.listing!.imageUrl!.isEmpty ||
+                                _removeExistingPhoto)
+                        ? null
+                        : _removePhoto,
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: _titleController,
+                    textInputAction: TextInputAction.next,
+                    validator: _requiredValidator,
+                    decoration: const InputDecoration(
+                      labelText: 'İlan başlığı',
+                      hintText: 'Örn. Temiz karton kutular',
+                      prefixIcon: Icon(Icons.title),
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 28),
-                    _PhotoPickerCard(
-                      colorScheme: colorScheme,
-                      selectedPhoto: _selectedPhoto,
-                      imageUrl: _removeExistingPhoto
-                          ? null
-                          : widget.listing?.imageUrl,
-                      onTap: _showPhotoOptions,
-                      onRemove:
-                          _selectedPhoto == null &&
-                              (widget.listing?.imageUrl == null ||
-                                  widget.listing!.imageUrl!.isEmpty ||
-                                  _removeExistingPhoto)
-                          ? null
-                          : _removePhoto,
+                  ),
+                  const SizedBox(height: 18),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'Kategori',
+                      prefixIcon: Icon(Icons.category_outlined),
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _titleController,
-                      textInputAction: TextInputAction.next,
-                      validator: _requiredValidator,
-                      decoration: const InputDecoration(
-                        labelText: 'İlan başlığı',
-                        hintText: 'Örn. Temiz karton kutular',
-                        prefixIcon: Icon(Icons.title),
-                        border: OutlineInputBorder(),
-                      ),
+                    items: _categories
+                        .map(
+                          (category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedCategory = value);
+                    },
+                    validator: (value) =>
+                        value == null ? 'Lütfen bir kategori seçin.' : null,
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _amountController,
+                    textInputAction: TextInputAction.next,
+                    validator: _requiredValidator,
+                    decoration: const InputDecoration(
+                      labelText: 'Miktar',
+                      hintText: 'Örn. 10 kg veya 18 adet',
+                      prefixIcon: Icon(Icons.scale_outlined),
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 18),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      decoration: const InputDecoration(
-                        labelText: 'Kategori',
-                        prefixIcon: Icon(Icons.category_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _categories
-                          .map(
-                            (category) => DropdownMenuItem(
-                              value: category,
-                              child: Text(category),
-                            ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _descriptionController,
+                    minLines: 4,
+                    maxLines: 6,
+                    validator: _requiredValidator,
+                    decoration: const InputDecoration(
+                      labelText: 'Açıklama',
+                      hintText: 'Miktar, durum ve teslim bilgilerini yazın.',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _locationController,
+                    textInputAction: TextInputAction.next,
+                    validator: _requiredValidator,
+                    decoration: const InputDecoration(
+                      labelText: 'Konum',
+                      hintText: 'İlçe veya mahalle',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _contactController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.phone,
+                    validator: _phoneValidator,
+                    onChanged: _onContactChanged,
+                    decoration: const InputDecoration(
+                      labelText: 'Telefon numarası',
+                      hintText: 'Örn. 0555 111 22 33',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _PhoneVerificationCard(
+                    isVerified: _isPhoneVerified,
+                    isSendingCode: _isSendingCode,
+                    isVerifyingCode: _isVerifyingCode,
+                    verificationId: _verificationId,
+                    message: _phoneAuthMessage,
+                    smsCodeController: _smsCodeController,
+                    onSendCode: _sendSmsCode,
+                    onVerifyCode: _verifySmsCode,
+                  ),
+                  const SizedBox(height: 28),
+                  FilledButton.icon(
+                    onPressed: _isSaving ? null : _submitDraft,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(54),
+                    ),
+                    icon: _isSaving
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedCategory = value);
-                      },
-                      validator: (value) =>
-                          value == null ? 'Lütfen bir kategori seçin.' : null,
+                        : const Icon(Icons.check_circle_outline),
+                    label: Text(
+                      _isSaving
+                          ? 'Kaydediliyor...'
+                          : (_isEditing
+                                ? 'Değişiklikleri Kaydet'
+                                : 'İlanı Oluştur'),
                     ),
-                    const SizedBox(height: 18),
-                    TextFormField(
-                      controller: _amountController,
-                      textInputAction: TextInputAction.next,
-                      validator: _requiredValidator,
-                      decoration: const InputDecoration(
-                        labelText: 'Miktar',
-                        hintText: 'Örn. 10 kg veya 18 adet',
-                        prefixIcon: Icon(Icons.scale_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    TextFormField(
-                      controller: _descriptionController,
-                      minLines: 4,
-                      maxLines: 6,
-                      validator: _requiredValidator,
-                      decoration: const InputDecoration(
-                        labelText: 'Açıklama',
-                        hintText: 'Miktar, durum ve teslim bilgilerini yazın.',
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    TextFormField(
-                      controller: _locationController,
-                      textInputAction: TextInputAction.next,
-                      validator: _requiredValidator,
-                      decoration: const InputDecoration(
-                        labelText: 'Konum',
-                        hintText: 'İlçe veya mahalle',
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    TextFormField(
-                      controller: _contactController,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.phone,
-                      validator: _phoneValidator,
-                      onChanged: _onContactChanged,
-                      decoration: const InputDecoration(
-                        labelText: 'Telefon numarası',
-                        hintText: 'Örn. 0555 111 22 33',
-                        prefixIcon: Icon(Icons.phone_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _PhoneVerificationCard(
-                      isVerified: _isPhoneVerified,
-                      isSendingCode: _isSendingCode,
-                      isVerifyingCode: _isVerifyingCode,
-                      verificationId: _verificationId,
-                      message: _phoneAuthMessage,
-                      smsCodeController: _smsCodeController,
-                      onSendCode: _sendSmsCode,
-                      onVerifyCode: _verifySmsCode,
-                    ),
-                    const SizedBox(height: 28),
-                    FilledButton.icon(
-                      onPressed: _isSaving ? null : _submitDraft,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(54),
-                      ),
-                      icon: _isSaving
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_circle_outline),
-                      label: Text(
-                        _isSaving
-                            ? 'Kaydediliyor...'
-                            : (_isEditing
-                                  ? 'Değişiklikleri Kaydet'
-                                  : 'İlanı Oluştur'),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -742,18 +742,37 @@ class _PhoneVerificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: isSendingCode || isVerifyingCode ? null : onSendCode,
-            icon: isSendingCode
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send_to_mobile_outlined),
-            label: Text(
-              verificationId == null ? 'SMS Kodu Gönder' : 'Kodu Tekrar Gönder',
+          if (isVerified)
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Bu numara ilan için hazır.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: isSendingCode || isVerifyingCode ? null : onSendCode,
+              icon: isSendingCode
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_to_mobile_outlined),
+              label: Text(
+                verificationId == null
+                    ? 'SMS Kodu Gönder'
+                    : 'Kodu Tekrar Gönder',
+              ),
             ),
-          ),
           if (verificationId != null && !isVerified) ...[
             const SizedBox(height: 12),
             TextFormField(

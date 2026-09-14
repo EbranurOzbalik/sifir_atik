@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'create_listing_page.dart';
 
@@ -48,7 +49,7 @@ class MyListingsPage extends StatelessWidget {
                       final requests = requestsSnapshot.data ?? const [];
 
                       return ListView.separated(
-                        padding: const EdgeInsets.all(20),
+                        padding: responsivePagePadding(context, top: 20),
                         itemCount: listings.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
@@ -59,9 +60,11 @@ class MyListingsPage extends StatelessWidget {
                               )
                               .toList();
 
-                          return _MyListingCard(
-                            listing: listing,
-                            requests: listingRequests,
+                          return ResponsiveContent(
+                            child: _MyListingCard(
+                              listing: listing,
+                              requests: listingRequests,
+                            ),
                           );
                         },
                       );

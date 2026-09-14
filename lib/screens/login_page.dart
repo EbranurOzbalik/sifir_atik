@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'home_page.dart';
 
@@ -225,7 +226,7 @@ class _LoginPageState extends State<LoginPage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: responsivePagePadding(context, top: 20),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -233,61 +234,91 @@ class _LoginPageState extends State<LoginPage> {
                       ? constraints.maxHeight - 40
                       : 0,
                 ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _Header(
-                            colorScheme: colorScheme,
-                            isRegisterMode: _isRegisterMode,
+                child: ResponsiveContent(
+                  maxWidth: kAuthContentMaxWidth,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Header(
+                          colorScheme: colorScheme,
+                          isRegisterMode: _isRegisterMode,
+                        ),
+                        const SizedBox(height: 40),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                          autocorrect: false,
+                          validator: _validateEmail,
+                          decoration: const InputDecoration(
+                            labelText: 'E-posta adresi',
+                            hintText: 'ornek@eposta.com',
+                            prefixIcon: Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(),
                           ),
-                          const SizedBox(height: 40),
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [AutofillHints.email],
-                            autocorrect: false,
-                            validator: _validateEmail,
-                            decoration: const InputDecoration(
-                              labelText: 'E-posta adresi',
-                              hintText: 'ornek@eposta.com',
-                              prefixIcon: Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(),
+                        ),
+                        const SizedBox(height: 18),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: _isRegisterMode
+                              ? TextInputAction.next
+                              : TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
+                          validator: _validatePassword,
+                          onChanged: (_) => setState(() {}),
+                          onFieldSubmitted: (_) {
+                            if (!_isRegisterMode) _submit();
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Şifre',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Şifreyi göster'
+                                  : 'Şifreyi gizle',
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
                             ),
+                            border: const OutlineInputBorder(),
                           ),
+                        ),
+                        if (_isRegisterMode) ...[
                           const SizedBox(height: 18),
                           TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            textInputAction: _isRegisterMode
-                                ? TextInputAction.next
-                                : TextInputAction.done,
-                            autofillHints: const [AutofillHints.password],
-                            validator: _validatePassword,
-                            onChanged: (_) => setState(() {}),
-                            onFieldSubmitted: (_) {
-                              if (!_isRegisterMode) _submit();
-                            },
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.newPassword],
+                            validator: _validateConfirmPassword,
+                            onFieldSubmitted: (_) => _submit(),
                             decoration: InputDecoration(
-                              labelText: 'Şifre',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              labelText: 'Şifre tekrar',
+                              prefixIcon: const Icon(Icons.lock_reset),
                               suffixIcon: IconButton(
-                                tooltip: _obscurePassword
-                                    ? 'Şifreyi göster'
-                                    : 'Şifreyi gizle',
+                                tooltip: _obscureConfirmPassword
+                                    ? 'Şifre tekrarını göster'
+                                    : 'Şifre tekrarını gizle',
                                 onPressed: () {
                                   setState(() {
-                                    _obscurePassword = !_obscurePassword;
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
                                   });
                                 },
                                 icon: Icon(
-                                  _obscurePassword
+                                  _obscureConfirmPassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
                                 ),
@@ -295,153 +326,121 @@ class _LoginPageState extends State<LoginPage> {
                               border: const OutlineInputBorder(),
                             ),
                           ),
-                          if (_isRegisterMode) ...[
-                            const SizedBox(height: 18),
-                            TextFormField(
-                              controller: _confirmPasswordController,
-                              obscureText: _obscureConfirmPassword,
-                              textInputAction: TextInputAction.done,
-                              autofillHints: const [AutofillHints.newPassword],
-                              validator: _validateConfirmPassword,
-                              onFieldSubmitted: (_) => _submit(),
-                              decoration: InputDecoration(
-                                labelText: 'Şifre tekrar',
-                                prefixIcon: const Icon(Icons.lock_reset),
-                                suffixIcon: IconButton(
-                                  tooltip: _obscureConfirmPassword
-                                      ? 'Şifre tekrarını göster'
-                                      : 'Şifre tekrarını gizle',
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmPassword =
-                                          !_obscureConfirmPassword;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                ),
-                                border: const OutlineInputBorder(),
+                        ],
+                        if (_passwordController.text.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _PasswordStrengthIndicator(
+                            strength: _passwordStrength,
+                            label: _passwordStrengthLabel,
+                            colorScheme: colorScheme,
+                          ),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CheckboxListTile(
+                                value: _rememberMe,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberMe = value ?? false;
+                                  });
+                                },
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                dense: true,
+                                title: const Text('Beni Hatırla'),
                               ),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading || _isRegisterMode
+                                  ? null
+                                  : _sendPasswordResetEmail,
+                              child: const Text('Şifremi Unuttum?'),
                             ),
                           ],
-                          if (_passwordController.text.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            _PasswordStrengthIndicator(
-                              strength: _passwordStrength,
-                              label: _passwordStrengthLabel,
-                              colorScheme: colorScheme,
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: _isLoading ? null : _submit,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CheckboxListTile(
-                                  value: _rememberMe,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _rememberMe = value ?? false;
-                                    });
-                                  },
-                                  contentPadding: EdgeInsets.zero,
-                                  controlAffinity:
-                                      ListTileControlAffinity.leading,
-                                  dense: true,
-                                  title: const Text('Beni Hatırla'),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _isLoading || _isRegisterMode
-                                    ? null
-                                    : _sendPasswordResetEmail,
-                                child: const Text('Şifremi Unuttum?'),
-                              ),
-                            ],
                           ),
-                          const SizedBox(height: 12),
-                          FilledButton(
-                            onPressed: _isLoading ? null : _submit,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(54),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            child: _isLoading
-                                ? const SizedBox.square(
-                                    dimension: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : Text(
-                                    _isRegisterMode
-                                        ? 'Hesap Oluştur'
-                                        : 'Giriş Yap',
+                          child: _isLoading
+                              ? const SizedBox.square(
+                                  dimension: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
                                   ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                )
+                              : Text(
+                                  _isRegisterMode
+                                      ? 'Hesap Oluştur'
+                                      : 'Giriş Yap',
                                 ),
-                                child: Text(
-                                  'veya',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
                               ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _signInWithGoogle,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(54),
-                              foregroundColor: colorScheme.onSurface,
-                              side: BorderSide(color: colorScheme.outline),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            icon: const Icon(
-                              Icons.g_mobiledata_rounded,
-                              size: 30,
-                            ),
-                            label: const Text('Google ile Giriş Yap'),
-                          ),
-                          const SizedBox(height: 28),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                _isRegisterMode
-                                    ? 'Zaten hesabın var mı?'
-                                    : 'Hesabın yok mu?',
+                              child: Text(
+                                'veya',
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              TextButton(
-                                onPressed: _isLoading ? null : _toggleAuthMode,
-                                child: Text(
-                                  _isRegisterMode ? 'Giriş Yap' : 'Kayıt Ol',
-                                ),
-                              ),
-                            ],
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                            foregroundColor: colorScheme.onSurface,
+                            side: BorderSide(color: colorScheme.outline),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ],
-                      ),
+                          icon: const Icon(
+                            Icons.g_mobiledata_rounded,
+                            size: 30,
+                          ),
+                          label: const Text('Google ile Giriş Yap'),
+                        ),
+                        const SizedBox(height: 28),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              _isRegisterMode
+                                  ? 'Zaten hesabın var mı?'
+                                  : 'Hesabın yok mu?',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading ? null : _toggleAuthMode,
+                              child: Text(
+                                _isRegisterMode ? 'Giriş Yap' : 'Kayıt Ol',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
