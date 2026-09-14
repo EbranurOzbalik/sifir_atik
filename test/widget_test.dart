@@ -92,8 +92,10 @@ void main() {
       find.byType(TextFormField).at(2),
       'Temiz ve katlanmış kutular.',
     );
-    await tester.enterText(find.byType(TextFormField).at(3), 'Ortahisar');
-    await tester.enterText(find.byType(TextFormField).at(4), '0555 111 22 33');
+    await tester.enterText(find.byType(TextFormField).at(3), 'Trabzon');
+    await tester.pump();
+    await tester.enterText(find.byType(TextFormField).at(4), 'Ortahisar');
+    await tester.enterText(find.byType(TextFormField).at(5), '0555 111 22 33');
     await tester.ensureVisible(find.text('İlanı Oluştur'));
     await tester.tap(find.text('İlanı Oluştur'));
     await tester.pump();
@@ -118,8 +120,10 @@ void main() {
       find.byType(TextFormField).at(2),
       'Temiz ve katlanmış kutular.',
     );
-    await tester.enterText(find.byType(TextFormField).at(3), 'Ortahisar');
-    await tester.enterText(find.byType(TextFormField).at(4), '123');
+    await tester.enterText(find.byType(TextFormField).at(3), 'Trabzon');
+    await tester.pump();
+    await tester.enterText(find.byType(TextFormField).at(4), 'Ortahisar');
+    await tester.enterText(find.byType(TextFormField).at(5), '123');
     await tester.ensureVisible(find.text('İlanı Oluştur'));
     await tester.tap(find.text('İlanı Oluştur'));
     await tester.pump();

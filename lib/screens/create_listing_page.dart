@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sifir_atik/data/turkey_locations.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
@@ -33,6 +34,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _districtController = TextEditingController();
   final _contactController = TextEditingController();
   final _smsCodeController = TextEditingController();
   final _listingRepository = const ListingRepository();
@@ -65,6 +68,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
       _amountController.text = listing.amount;
       _descriptionController.text = listing.description;
       _locationController.text = listing.location;
+      _setInitialLocation(listing.location);
       _contactController.text = listing.contactInfo;
       _selectedCategory = listing.category;
       _verifiedPhone = _normalizedPhone(listing.contactInfo);
@@ -77,9 +81,34 @@ class _CreateListingPageState extends State<CreateListingPage> {
     _amountController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _cityController.dispose();
+    _districtController.dispose();
     _contactController.dispose();
     _smsCodeController.dispose();
     super.dispose();
+  }
+
+  void _setInitialLocation(String location) {
+    final parts = location
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.length >= 2) {
+      _districtController.text = parts.first;
+      _cityController.text = parts.last;
+      return;
+    }
+
+    if (parts.length == 1) {
+      final value = parts.first;
+      if (turkeyCities.contains(value)) {
+        _cityController.text = value;
+      } else {
+        _districtController.text = value;
+      }
+    }
   }
 
   String? _requiredValidator(String? value) {
@@ -111,6 +140,34 @@ class _CreateListingPageState extends State<CreateListingPage> {
     if (phone.startsWith('5')) return '+90$phone';
 
     return phone;
+  }
+
+  String? _locationValidator() {
+    final city = _cityController.text.trim();
+    final district = _districtController.text.trim();
+    final districts = turkeyDistrictsByCity[city] ?? const <String>[];
+
+    if (city.isEmpty) return 'Lütfen şehir seçin.';
+    if (!turkeyCities.contains(city)) {
+      return 'Listeden geçerli bir şehir seçin.';
+    }
+    if (districts.isNotEmpty && district.isEmpty) {
+      return 'Lütfen ilçe seçin.';
+    }
+    if (district.isNotEmpty &&
+        districts.isNotEmpty &&
+        !districts.contains(district)) {
+      return 'Listeden geçerli bir ilçe seçin.';
+    }
+
+    return null;
+  }
+
+  void _syncLocation() {
+    final city = _cityController.text.trim();
+    final district = _districtController.text.trim();
+
+    _locationController.text = district.isEmpty ? city : '$district, $city';
   }
 
   void _onContactChanged(String value) {
@@ -606,16 +663,79 @@ class _CreateListingPageState extends State<CreateListingPage> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  TextFormField(
-                    controller: _locationController,
-                    textInputAction: TextInputAction.next,
-                    validator: _requiredValidator,
-                    decoration: const InputDecoration(
-                      labelText: 'Konum',
-                      hintText: 'İlçe veya mahalle',
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                      border: OutlineInputBorder(),
-                    ),
+                  FormField<void>(
+                    validator: (_) => _locationValidator(),
+                    builder: (field) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _LocationAutocompleteField(
+                            labelText: 'Şehir',
+                            hintText: 'Şehir ara',
+                            icon: Icons.location_city_outlined,
+                            controller: _cityController,
+                            options: turkeyCities,
+                            onChanged: (value) {
+                              setState(() {
+                                _cityController.text = value;
+                                _districtController.clear();
+                                _syncLocation();
+                              });
+                              field.didChange(null);
+                            },
+                            onSelected: (value) {
+                              setState(() {
+                                _cityController.text = value;
+                                _districtController.clear();
+                                _syncLocation();
+                              });
+                              field.didChange(null);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _LocationAutocompleteField(
+                            labelText: 'İlçe',
+                            hintText: _cityController.text.trim().isEmpty
+                                ? 'Önce şehir seçin'
+                                : 'İlçe ara',
+                            icon: Icons.place_outlined,
+                            controller: _districtController,
+                            options:
+                                turkeyDistrictsByCity[_cityController.text
+                                    .trim()] ??
+                                const [],
+                            enabled: _cityController.text.trim().isNotEmpty,
+                            onChanged: (value) {
+                              setState(() {
+                                _districtController.text = value;
+                                _syncLocation();
+                              });
+                              field.didChange(null);
+                            },
+                            onSelected: (value) {
+                              setState(() {
+                                _districtController.text = value;
+                                _syncLocation();
+                              });
+                              field.didChange(null);
+                            },
+                          ),
+                          if (field.hasError) ...[
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Text(
+                                field.errorText!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 18),
                   TextFormField(
@@ -811,6 +931,106 @@ class _PhoneVerificationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LocationAutocompleteField extends StatelessWidget {
+  const _LocationAutocompleteField({
+    required this.labelText,
+    required this.hintText,
+    required this.icon,
+    required this.controller,
+    required this.options,
+    required this.onChanged,
+    required this.onSelected,
+    this.enabled = true,
+  });
+
+  final String labelText;
+  final String hintText;
+  final IconData icon;
+  final TextEditingController controller;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<String> onSelected;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      initialValue: TextEditingValue(text: controller.text),
+      optionsBuilder: (textEditingValue) {
+        final query = _normalizeSearchText(textEditingValue.text);
+        if (query.isEmpty) return options;
+
+        return options.where((option) {
+          return _normalizeSearchText(option).contains(query);
+        });
+      },
+      onSelected: onSelected,
+      fieldViewBuilder:
+          (context, textEditingController, focusNode, onFieldSubmitted) {
+            if (textEditingController.text != controller.text) {
+              textEditingController.text = controller.text;
+            }
+
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              enabled: enabled,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: labelText,
+                hintText: hintText,
+                prefixIcon: Icon(icon),
+                suffixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                controller.text = value;
+                onChanged(value);
+              },
+              onFieldSubmitted: (_) => onFieldSubmitted(),
+            );
+          },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220, maxWidth: 360),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+
+                  return ListTile(
+                    dense: true,
+                    title: Text(option),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+String _normalizeSearchText(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll('ı', 'i')
+      .replaceAll('İ', 'i')
+      .replaceAll('ğ', 'g')
+      .replaceAll('ü', 'u')
+      .replaceAll('ş', 's')
+      .replaceAll('ö', 'o')
+      .replaceAll('ç', 'c');
 }
 
 class _PhotoPickerCard extends StatelessWidget {
