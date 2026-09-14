@@ -1,68 +1,76 @@
 # Sıfır Atık
 
 Sıfır Atık, kullanılabilir durumdaki atıkların ilan olarak paylaşılabildiği bir
-Flutter mobil uygulamasıdır. Uygulamadaki temel amaç; karton, cam, plastik veya
-elektronik gibi değerlendirilebilir atıkları ihtiyaç duyan kişilerle daha kolay
-buluşturmaktır.
+Flutter mobil uygulamasıdır. Projede temel amaç; karton, cam, plastik veya
+elektronik gibi değerlendirilebilir atıkların ihtiyaç duyan kişiler tarafından
+daha kolay bulunmasını sağlamaktır.
 
-Projeyi şu anda Android odaklı olarak geliştirdim ve denemelerimi Android
-emülatör üzerinde yaptım. Flutter altyapısı sayesinde proje iOS klasörünü de
-içeriyor; ancak iOS tarafını ayrıca test etmedim.
+Bu projeyi Android odaklı geliştirdim ve denemelerimi Android emülatör üzerinde
+yaptım. Flutter projesi olduğu için iOS klasörü de duruyor; fakat iOS tarafını
+ayrıca test etmedim.
 
-## Projede Neler Var?
+## Projenin Amacı
 
-### Kullanıcı işlemleri
+Uygulamada kullanıcılar ellerindeki atıkları ilan olarak paylaşabiliyor. Başka
+bir kullanıcı ilana talep gönderebiliyor. İlan sahibi talebi kabul ederse iletişim
+bilgisi açılıyor ve kullanıcılar arama ya da WhatsApp üzerinden iletişim
+kurabiliyor.
+
+Bu şekilde uygulama sadece ilanların listelendiği bir ekran olmaktan çıkıp, ilan
+oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
+
+## Uygulamada Neler Var?
+
+### Giriş ve kullanıcı akışı
 
 - E-posta ve şifre ile kayıt olma / giriş yapma
 - Google ile giriş desteği
-- Şifre sıfırlama akışı
-- Uygulama açıldığında mevcut oturumu kontrol etme
+- Şifre sıfırlama ekranı
+- Uygulama açıldığında oturum kontrolü
 - Çıkış yapma
 
-### İlan işlemleri
+### İlan akışı
 
 - Atık ilanı oluşturma
 - İlanlara fotoğraf ekleme
-- İlan fotoğrafını güncelleme veya kaldırma
-- Kendi ilanlarını görme, düzenleme ve silme
-- İlanları kategoriye göre filtreleme
-- İlanlarda başlık, kategori ve konuma göre arama yapma
-- İlan oluştururken şehir ve ilçeyi arayarak seçme
-- İlan kartlarında `Miktar • Konum` bilgisini standart şekilde gösterme
+- Fotoğrafı güncelleme veya kaldırma
+- Şehir ve ilçeyi arayarak seçme
+- İlanları listeleme ve detayını görme
+- Kategoriye göre filtreleme
+- Başlık, kategori ve konuma göre arama yapma
+- Kullanıcının kendi ilanlarını düzenlemesi ve silmesi
 
-### Talep işlemleri
+### Talep akışı
 
-- Başka kullanıcıların ilanlarına talep gönderme
+- Başka kullanıcının ilanına talep gönderme
 - Kullanıcının kendi ilanına talep göndermesini engelleme
-- Gönderilen talepleri `Taleplerim` ekranında takip etme
-- İlan sahibinin gelen talepleri kabul veya reddetmesi
-- Talep durumunu `Beklemede`, `Kabul edildi` veya `Reddedildi` olarak gösterme
-- Talep kabul edilince iletişim bilgisini açma
-- Kabul edilen taleplerde arama veya WhatsApp üzerinden mesaj gönderme
+- Gönderilen talepleri takip etme
+- İlan sahibinin talebi kabul veya reddetmesi
+- Talep durumunu beklemede, kabul edildi veya reddedildi olarak gösterme
+- Kabul edilen talepte telefon bilgisini açma
+- Arama ve WhatsApp üzerinden iletişim kurma
 
-### Firebase kullanımı
+### Veritabanı ve dosya tarafı
 
-- Firebase Authentication ile kullanıcı girişi
-- Firestore ile ilan ve talep verilerini kaydetme
+- Firebase Authentication ile kullanıcı işlemleri
+- Cloud Firestore ile ilan ve talep verilerini tutma
 - Firebase Storage ile ilan fotoğraflarını saklama
-- Firestore güvenlik kurallarıyla ilan sahibi ve talep sahibi kontrolleri
-- Storage kurallarıyla fotoğraf yükleme ve silme izinleri
+- Firestore güvenlik kurallarıyla ilan ve talep sahipliğini kontrol etme
+- Storage kurallarıyla fotoğraf yükleme ve silme izinlerini sınırlandırma
 
 ## Ekran Görüntüleri
 
-Uygulamanın temel akışını gösteren bazı ekranlar:
-
 | Giriş | Ana ekran |
 | --- | --- |
-| <img src="screenshots/01-login.png" width="230" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="230" alt="Ana ekran"> |
+| <img src="screenshots/01-login.png" width="220" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="220" alt="Ana ekran"> |
 
 | İlanlar | İlan detayı |
 | --- | --- |
-| <img src="screenshots/03-listings.png" width="230" alt="İlan listesi"> | <img src="screenshots/05-listing-detail.png" width="230" alt="İlan detayı"> |
+| <img src="screenshots/03-listings.png" width="220" alt="İlan listesi"> | <img src="screenshots/05-listing-detail.png" width="220" alt="İlan detayı"> |
 
 | İlan oluşturma | Taleplerim ve iletişim |
 | --- | --- |
-| <img src="screenshots/07-create-listing.png" width="230" alt="İlan oluşturma ekranı"> | <img src="screenshots/09-my-requests.png" width="230" alt="Taleplerim ve iletişim ekranı"> |
+| <img src="screenshots/07-create-listing.png" width="220" alt="İlan oluşturma ekranı"> | <img src="screenshots/09-my-requests.png" width="220" alt="Taleplerim ve iletişim ekranı"> |
 
 ## Kullandığım Teknolojiler
 
@@ -77,10 +85,10 @@ Uygulamanın temel akışını gösteren bazı ekranlar:
 - URL Launcher
 - Shared Preferences
 
-## Kurulum
+## Projeyi Çalıştırma
 
-Projeyi çalıştırmadan önce Flutter SDK ve Android geliştirme ortamının hazır
-olması gerekiyor.
+Flutter SDK ve Android geliştirme ortamı hazır olduktan sonra proje şu komutlarla
+çalıştırılabilir:
 
 ```bash
 flutter pub get
@@ -97,44 +105,41 @@ flutter test
 ## Test Durumu
 
 Projede widget testleri, repository testleri ve Firestore güvenlik kuralı
-testleri bulunuyor. Şu anda testlerde özellikle şu akışları kontrol ediyorum:
+testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 
-- Giriş ekranındaki temel alanların görünmesi
-- Şifre gücü ve kayıt formu davranışları
+- Giriş ekranındaki temel alanlar
+- Şifre gücü ve kayıt formu davranışı
 - Ana ekrandaki yönlendirmeler
 - İlan oluşturma formu
-- Fotoğraf kaldırma davranışı
+- Fotoğraf kaldırma işlemi
 - Arama ve kategori filtreleri
 - Kullanıcının kendi ilanına talep gönderememesi
 - Talep başarısız olduğunda yanlış başarı mesajı gösterilmemesi
 - Talep durumlarının ekranda doğru görünmesi
 - İlan düzenleme ve silme işlemlerinin talep verileriyle birlikte güncellenmesi
-- Firestore kurallarında ilan sahibinin doğrulanması
+- Firestore kurallarında ilan sahibi kontrolü
 
 Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 28 testin
 tamamı geçti.
 
-## Manuel Olarak Denediğim Akış
+## Manuel Denediğim Akış
 
-Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak kontrol ettim:
+Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak denedim:
 
-1. İlk kullanıcıyla giriş yaptım ve telefon numarasını SMS koduyla doğruladım.
-2. Fotoğraflı bir atık ilanı oluşturdum.
-3. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
-4. İlk kullanıcıyla gelen talebi gördüm ve talebi kabul ettim.
-5. İkinci kullanıcıda talep durumunun güncellendiğini kontrol ettim.
-6. Talep kabul edilince telefon bilgisinin açıldığını, arama ve WhatsApp
-   seçeneklerinin göründüğünü denedim.
+1. İlk kullanıcıyla giriş yaptım.
+2. İlan oluştururken telefon numarasını SMS koduyla doğruladım.
+3. Fotoğraflı bir atık ilanı oluşturdum.
+4. İkinci kullanıcıyla giriş yapıp bu ilana talep gönderdim.
+5. İlk kullanıcıyla gelen talebi kabul ettim.
+6. İkinci kullanıcıda talebin kabul edildiğini ve iletişim alanının açıldığını
+   kontrol ettim.
+7. Arama ve WhatsApp butonlarının göründüğünü denedim.
 
-## Projenin Şu Anki Durumu
+## Şu Anki Durum
 
 Proje şu anda Android emülatörde demo yapılabilecek seviyede. Kullanıcı giriş
-yapabiliyor, ilan oluşturabiliyor, fotoğraf ekleyebiliyor, kendi ilanlarını
-yönetebiliyor ve başka ilanlara talep gönderebiliyor.
+yapabiliyor, ilan oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor,
+kendi ilanlarını yönetebiliyor ve başka ilanlara talep gönderebiliyor.
 
-iOS klasörü Flutter projesinin platform altyapısı olarak duruyor. iOS tarafında
-kamera, galeri ve platform ayarları ayrıca test edilmediği için projeyi şu an
-Android odaklı olarak değerlendiriyorum.
-
-Play Store'a çıkarılacak bir sürüm için Android release imzasının ayrıca
-hazırlanması gerekir.
+İleride iOS tarafı ayrıca test edilebilir. Play Store için de debug imza yerine
+ayrı bir release imzası hazırlanması gerekir.
