@@ -370,8 +370,8 @@ class _ListingCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: 92,
+                height: 92,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
@@ -385,10 +385,10 @@ class _ListingCard extends StatelessWidget {
                 child: _ListingImage(
                   listing: listing,
                   borderRadius: BorderRadius.circular(18),
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

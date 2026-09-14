@@ -60,17 +60,23 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 
 ## Ekran Görüntüleri
 
+### Giriş ve ana ekran
+
 | Giriş | Ana ekran |
 | --- | --- |
-| <img src="screenshots/01-login.png" width="220" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="220" alt="Ana ekran"> |
+| <img src="screenshots/01-login.png" width="260" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="260" alt="Ana ekran"> |
+
+### İlan akışı
 
 | İlanlar | İlan detayı |
 | --- | --- |
-| <img src="screenshots/03-listings.png" width="220" alt="İlan listesi"> | <img src="screenshots/05-listing-detail.png" width="220" alt="İlan detayı"> |
+| <img src="screenshots/03-listings.png" width="260" alt="İlan listesi"> | <img src="screenshots/05-listing-detail.png" width="260" alt="İlan detayı"> |
+
+### İlan oluşturma ve talep takibi
 
 | İlan oluşturma | Taleplerim ve iletişim |
 | --- | --- |
-| <img src="screenshots/07-create-listing.png" width="220" alt="İlan oluşturma ekranı"> | <img src="screenshots/09-my-requests.png" width="220" alt="Taleplerim ve iletişim ekranı"> |
+| <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> | <img src="screenshots/09-my-requests.png" width="260" alt="Taleplerim ve iletişim ekranı"> |
 
 ## Kullandığım Teknolojiler
 
