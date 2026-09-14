@@ -53,27 +53,26 @@ olmasını sağlamaya çalıştım.
   mesaj gönderme
 - İlan listesi tekrar açıldığında talep durumlarının güncel kalması
 
-## Uygulamadan ekranlar
+## Uygulamadan Ekranlar
+
+Uygulamanın temel akışını giriş, ilan oluşturma, ilanları inceleme ve talep
+takibi üzerinden göstermek istedim.
 
 | Giriş | Ana ekran |
 | --- | --- |
-| <img src="screenshots/01-login.png" width="260" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="260" alt="Ana ekran"> |
+| <img src="screenshots/01-login.png" width="230" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="230" alt="Ana ekran"> |
 
-| İlanlar | Filtre sonucu |
+| İlanlar | İlan detayı |
 | --- | --- |
-| <img src="screenshots/03-listings.png" width="260" alt="İlan listesi"> | <img src="screenshots/04-empty-filter.png" width="260" alt="Filtre sonucu boş ekran"> |
-
-| İlan detayı | Talep gönderildi |
-| --- | --- |
-| <img src="screenshots/05-listing-detail.png" width="260" alt="İlan detayı"> | <img src="screenshots/06-interest-sent.png" width="260" alt="Talep gönderildi ekranı"> |
+| <img src="screenshots/03-listings.png" width="230" alt="İlan listesi"> | <img src="screenshots/05-listing-detail.png" width="230" alt="İlan detayı"> |
 
 | İlan oluşturma | İlanlarım |
 | --- | --- |
-| <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> | <img src="screenshots/08-my-listings.png" width="260" alt="İlanlarım ekranı"> |
+| <img src="screenshots/07-create-listing.png" width="230" alt="İlan oluşturma ekranı"> | <img src="screenshots/08-my-listings.png" width="230" alt="İlanlarım ekranı"> |
 
-| Taleplerim | Kabul sonrası iletişim | Profilim |
-| --- | --- | --- |
-| <img src="screenshots/09-my-requests.png" width="240" alt="Taleplerim ekranı"> | <img src="screenshots/11-contact-options.png" width="240" alt="Kabul sonrası iletişim seçenekleri"> | <img src="screenshots/10-profile.png" width="240" alt="Profilim ekranı"> |
+| Taleplerim | Kabul sonrası iletişim |
+| --- | --- |
+| <img src="screenshots/09-my-requests.png" width="230" alt="Taleplerim ekranı"> | <img src="screenshots/11-contact-options.png" width="230" alt="Kabul sonrası iletişim seçenekleri"> |
 
 ## Projeyi Çalıştırma
 

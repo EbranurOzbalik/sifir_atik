@@ -55,10 +55,16 @@ class MyRequestsPage extends StatelessWidget {
 
                   return ListView.separated(
                     padding: responsivePagePadding(context, top: 20),
-                    itemCount: requests.length,
+                    itemCount: requests.length + 1,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final request = requests[index];
+                      if (index == 0) {
+                        return ResponsiveContent(
+                          child: _RequestsSummaryCard(requests: requests),
+                        );
+                      }
+
+                      final request = requests[index - 1];
 
                       return ResponsiveContent(
                         child: _RequestCard(
@@ -72,6 +78,69 @@ class MyRequestsPage extends StatelessWidget {
                   );
                 },
               ),
+      ),
+    );
+  }
+}
+
+class _RequestsSummaryCard extends StatelessWidget {
+  const _RequestsSummaryCard({required this.requests});
+
+  final List<ListingRequest> requests;
+
+  int get _acceptedCount => requests
+      .where((request) => request.status == ListingRequestStatus.accepted)
+      .length;
+
+  int get _pendingCount => requests
+      .where((request) => request.status == ListingRequestStatus.pending)
+      .length;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              Icons.handshake_outlined,
+              color: colorScheme.primary,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Taleplerinin durumu',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$_acceptedCount kabul edildi · $_pendingCount bekliyor',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -176,6 +245,13 @@ class _RequestCard extends StatelessWidget {
               listingInfo,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
+            const SizedBox(height: 6),
+            Text(
+              'Talep gönderildi: ${_formatRequestDate(request.createdAt)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 12),
             Chip(
               label: Text(statusInfo.label),
@@ -212,9 +288,25 @@ class _RequestCard extends StatelessWidget {
                         Icon(Icons.phone_outlined, color: colorScheme.primary),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            'İlan sahibinin telefonu: ${request.ownerContactInfo}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'İlan sahibinin telefonu',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              Text(
+                                request.ownerContactInfo,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -223,19 +315,28 @@ class _RequestCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
+                          flex: 2,
                           child: OutlinedButton.icon(
                             onPressed: () => _openPhone(context),
                             icon: const Icon(Icons.call_outlined),
-                            label: const FittedBox(child: Text('Ara')),
+                            label: const Text('Ara'),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
+                          flex: 3,
                           child: FilledButton.icon(
                             onPressed: () => _openWhatsApp(context),
                             icon: const Icon(Icons.chat_outlined),
-                            label: const FittedBox(
-                              child: Text("WhatsApp'tan yaz"),
+                            label: Text(
+                              "WhatsApp'tan yaz",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                           ),
                         ),
@@ -250,6 +351,25 @@ class _RequestCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatRequestDate(DateTime date) {
+  const months = [
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
+  ];
+
+  return '${date.day} ${months[date.month - 1]}';
 }
 
 class _StatusInfo {
