@@ -40,7 +40,7 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Başlık, kategori ve konuma göre arama yapma
 - Kullanıcının kendi ilanlarını düzenlemesi ve silmesi
 
-### Talep akışı
+### Talep ve iletişim akışı
 
 - Başka kullanıcının ilanına talep gönderme
 - Kullanıcının kendi ilanına talep göndermesini engelleme
@@ -50,12 +50,20 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Kabul edilen talepte telefon bilgisini açma
 - Arama ve WhatsApp üzerinden iletişim kurma
 
+### Bildirme ve moderasyon akışı
+
+- İlan detayından uygunsuz ilanı bildirme
+- Bildirim nedeni seçme
+- Moderatör hesabında bildirilen ilanları ayrı ekranda görme
+- Bildirimi incelendi olarak işaretleme
+- Gerekirse bildirilen ilanı kaldırma
+
 ### Veritabanı ve dosya tarafı
 
 - Firebase Authentication ile kullanıcı işlemleri
 - Cloud Firestore ile ilan ve talep verilerini tutma
 - Firebase Storage ile ilan fotoğraflarını saklama
-- Firestore güvenlik kurallarıyla ilan ve talep sahipliğini kontrol etme
+- Firestore güvenlik kurallarıyla ilan, talep ve moderatör izinlerini kontrol etme
 - Storage kurallarıyla fotoğraf yükleme ve silme izinlerini sınırlandırma
 
 ## Ekran Görüntüleri
@@ -77,6 +85,12 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 | İlan oluşturma | Taleplerim ve iletişim |
 | --- | --- |
 | <img src="screenshots/07-create-listing.png" width="260" alt="İlan oluşturma ekranı"> | <img src="screenshots/09-my-requests.png" width="260" alt="Taleplerim ve iletişim ekranı"> |
+
+### Bildirme ve moderatör ekranı
+
+| İlanı bildir | Moderatör paneli |
+| --- | --- |
+| <img src="screenshots/10-report-listing.png" width="260" alt="İlan bildirme ekranı"> | <img src="screenshots/11-moderation-panel.png" width="260" alt="Moderatör paneli"> |
 
 ## Kullandığım Teknolojiler
 
@@ -123,9 +137,10 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Talep başarısız olduğunda yanlış başarı mesajı gösterilmemesi
 - Talep durumlarının ekranda doğru görünmesi
 - İlan düzenleme ve silme işlemlerinin talep verileriyle birlikte güncellenmesi
-- Firestore kurallarında ilan sahibi kontrolü
+- Firestore kurallarında ilan sahibi ve moderatör kontrolü
+- İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 28 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 35 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış
@@ -140,12 +155,13 @@ Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak dened
 6. İkinci kullanıcıda talebin kabul edildiğini ve iletişim alanının açıldığını
    kontrol ettim.
 7. Arama ve WhatsApp butonlarının göründüğünü denedim.
+8. Bir ilanı bildirip moderatör panelinde göründüğünü kontrol ettim.
 
 ## Şu Anki Durum
 
 Proje şu anda Android emülatörde demo yapılabilecek seviyede. Kullanıcı giriş
 yapabiliyor, ilan oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor,
-kendi ilanlarını yönetebiliyor ve başka ilanlara talep gönderebiliyor.
+kendi ilanlarını yönetebiliyor, başka ilanlara talep gönderebiliyor ve uygunsuz ilanlar moderatör tarafından incelenebiliyor.
 
 İleride iOS tarafı ayrıca test edilebilir. Play Store için de debug imza yerine
 ayrı bir release imzası hazırlanması gerekir.

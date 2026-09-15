@@ -1,15 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'login_page.dart';
+import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.repository = const ListingRepository()});
+
+  final ListingRepository repository;
 
   User? get _user =>
       Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
@@ -115,6 +119,31 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
             ),
+            if (user != null)
+              FutureBuilder<bool>(
+                future: repository.isModerator(user.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.data != true) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return ResponsiveContent(
+                    child: _ProfileTile(
+                      icon: Icons.admin_panel_settings_outlined,
+                      title: 'Moderatör Paneli',
+                      description: 'Bildirilen ilanları incele.',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                ModerationPage(repository: repository),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             const SizedBox(height: 12),
             ResponsiveContent(
               child: OutlinedButton.icon(

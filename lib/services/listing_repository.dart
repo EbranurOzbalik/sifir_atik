@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
 
@@ -131,6 +132,47 @@ class ListingRepository {
     }
   }
 
+  Stream<List<ListingReport>> watchOpenReports() async* {
+    if (!_isFirebaseReady) {
+      yield const [];
+      return;
+    }
+
+    try {
+      final query = _db
+          .collection('listingReports')
+          .where('status', isEqualTo: ListingReportStatus.open.name);
+
+      await for (final snapshot in query.snapshots()) {
+        final reports =
+            snapshot.docs
+                .map(ListingReport.fromFirestore)
+                .where((report) => report.listingId.isNotEmpty)
+                .toList()
+              ..sort(
+                (first, second) => second.createdAt.compareTo(first.createdAt),
+              );
+
+        yield reports;
+      }
+    } catch (_) {
+      yield const [];
+    }
+  }
+
+  Future<bool> isModerator(String userId) async {
+    if (!_isFirebaseReady || userId.isEmpty) return false;
+
+    try {
+      final doc = await _db.collection('users').doc(userId).get();
+      final data = doc.data() ?? {};
+
+      return data['role'] == 'moderator' || data['isModerator'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> addListing(Listing listing) async {
     if (!_isFirebaseReady) return false;
 
@@ -218,6 +260,64 @@ class ListingRepository {
           .collection('listingRequests')
           .doc(request.id)
           .set(request.toFirestore());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> addReport(ListingReport report) async {
+    if (!_isFirebaseReady) return false;
+
+    try {
+      await _db
+          .collection('listingReports')
+          .doc(report.id)
+          .set(report.toFirestore());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> resolveReport(String reportId) async {
+    if (!_isFirebaseReady || reportId.isEmpty) return false;
+
+    try {
+      await _db.collection('listingReports').doc(reportId).update({
+        'status': ListingReportStatus.resolved.name,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteReportedListing(String listingId) async {
+    if (!_isFirebaseReady || listingId.isEmpty) return false;
+
+    try {
+      final batch = _db.batch();
+      final requestSnapshot = await _db
+          .collection('listingRequests')
+          .where('listingId', isEqualTo: listingId)
+          .get();
+      final reportSnapshot = await _db
+          .collection('listingReports')
+          .where('listingId', isEqualTo: listingId)
+          .get();
+
+      for (final requestDoc in requestSnapshot.docs) {
+        batch.delete(requestDoc.reference);
+      }
+      for (final reportDoc in reportSnapshot.docs) {
+        batch.update(reportDoc.reference, {
+          'status': ListingReportStatus.resolved.name,
+        });
+      }
+
+      batch.delete(_db.collection('listings').doc(listingId));
+      await batch.commit();
       return true;
     } catch (_) {
       return false;

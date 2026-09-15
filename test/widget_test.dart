@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sifir_atik/main.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/screens/create_listing_page.dart';
 import 'package:sifir_atik/screens/home_page.dart';
@@ -294,6 +295,65 @@ void main() {
     expect(find.text('Talep durumu: Beklemede'), findsNothing);
   });
 
+  testWidgets('listing detail can report another user listing', (tester) async {
+    final listing = _testListing(ownerId: 'owner-1');
+    final repository = _FakeListingRepository(listings: [listing]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          currentUserName: 'Zeynep',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Karton denemesi'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('İlanı Bildir'));
+    await tester.tap(find.text('İlanı Bildir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yanlış kategori'));
+    await tester.pump();
+
+    expect(repository.addReportCount, 1);
+    expect(repository.lastReport?.listingId, listing.id);
+    expect(repository.lastReport?.reason, 'Yanlış kategori');
+    expect(
+      find.text('İlan bildirildi. Moderatör inceleyebilir.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('user cannot report their own listing', (tester) async {
+    final listing = _testListing(ownerId: 'user-1');
+    final repository = _FakeListingRepository(listings: [listing]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          currentUserName: 'Ebranur',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Karton denemesi'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('İlanı Bildir'));
+    await tester.tap(find.text('İlanı Bildir'));
+    await tester.pump();
+
+    expect(repository.addReportCount, 0);
+    expect(find.text('Kendi ilanınızı bildiremezsiniz.'), findsOneWidget);
+  });
+
   testWidgets('request statuses are shown as pending accepted and rejected', (
     tester,
   ) async {
@@ -433,6 +493,8 @@ class _FakeListingRepository extends ListingRepository {
   final List<ListingRequest> requests;
   final bool shouldSaveRequest;
   int addRequestCount = 0;
+  int addReportCount = 0;
+  ListingReport? lastReport;
 
   @override
   Stream<List<Listing>> watchListings() => Stream.value(listings);
@@ -448,5 +510,12 @@ class _FakeListingRepository extends ListingRepository {
   Future<bool> addRequest(ListingRequest request) async {
     addRequestCount += 1;
     return shouldSaveRequest;
+  }
+
+  @override
+  Future<bool> addReport(ListingReport report) async {
+    addReportCount += 1;
+    lastReport = report;
+    return true;
   }
 }

@@ -1,13 +1,22 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'create_listing_page.dart';
 import 'listings_page.dart';
+import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
-import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.repository = const ListingRepository()});
+
+  final ListingRepository repository;
+
+  User? get _user =>
+      Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +95,21 @@ class HomePage extends StatelessWidget {
                   );
                 },
               );
+              final reportedListingsCard = _ActionCard(
+                icon: Icons.flag_outlined,
+                title: 'Bildirilen İlanlar',
+                description: 'Gelen bildirimleri incele.',
+                color: colorScheme.error,
+                backgroundColor: colorScheme.errorContainer,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ModerationPage(repository: repository),
+                    ),
+                  );
+                },
+              );
+              final user = _user;
 
               return SingleChildScrollView(
                 padding: responsivePagePadding(context, top: 10),
@@ -123,6 +147,20 @@ class HomePage extends StatelessWidget {
                                 Expanded(child: myRequestsCard),
                               ],
                             ),
+                            if (user != null)
+                              FutureBuilder<bool>(
+                                future: repository.isModerator(user.uid),
+                                builder: (context, snapshot) {
+                                  if (snapshot.data != true) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: reportedListingsCard,
+                                  );
+                                },
+                              ),
                           ],
                         )
                       else
@@ -136,6 +174,24 @@ class HomePage extends StatelessWidget {
                             myListingsCard,
                             const SizedBox(height: 14),
                             myRequestsCard,
+                            if (user != null)
+                              FutureBuilder<bool>(
+                                future: repository.isModerator(user.uid),
+                                builder: (context, snapshot) {
+                                  if (snapshot.data != true) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const SizedBox(height: 14),
+                                      reportedListingsCard,
+                                    ],
+                                  );
+                                },
+                              ),
                           ],
                         ),
                     ],

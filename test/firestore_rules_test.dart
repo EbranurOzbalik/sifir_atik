@@ -26,5 +26,27 @@ void main() {
         contains('request.resource.data.ownerId == resource.data.ownerId'),
       );
     });
+
+    test('moderatör rolü users koleksiyonundan kontrol edilir', () {
+      expect(rules, contains('function isModerator()'));
+      expect(rules, contains('match /users/{userId}'));
+      expect(rules, contains('request.auth.uid == userId'));
+      expect(rules, contains("data.role == 'moderator'"));
+      expect(rules, contains('data.isModerator == true'));
+    });
+
+    test('ilan bildirimleri yalnızca giriş yapan kullanıcıyla oluşturulur', () {
+      expect(rules, contains('match /listingReports/{reportId}'));
+      expect(
+        rules,
+        contains('request.auth.uid == request.resource.data.reporterId'),
+      );
+      expect(
+        rules,
+        contains(
+          'request.resource.data.reporterId != request.resource.data.listingOwnerId',
+        ),
+      );
+    });
   });
 }

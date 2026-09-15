@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -180,6 +181,10 @@ class _ListingsPageState extends State<ListingsPage> {
         builder: (_) => _ListingDetailPage(
           listing: listing,
           request: _requestsByListingId[listing.id],
+          repository: widget.repository,
+          currentUserId: _currentUserId,
+          currentUserName: _currentUserName,
+          hasFirebase: _hasFirebase,
           onInterestChanged: () => _toggleInterest(listing),
         ),
       ),
@@ -457,11 +462,19 @@ class _ListingDetailPage extends StatefulWidget {
   const _ListingDetailPage({
     required this.listing,
     required this.request,
+    required this.repository,
+    required this.currentUserId,
+    required this.currentUserName,
+    required this.hasFirebase,
     required this.onInterestChanged,
   });
 
   final Listing listing;
   final ListingRequest? request;
+  final ListingRepository repository;
+  final String? currentUserId;
+  final String? currentUserName;
+  final bool hasFirebase;
   final InterestChangedCallback onInterestChanged;
 
   @override
@@ -469,8 +482,16 @@ class _ListingDetailPage extends StatefulWidget {
 }
 
 class _ListingDetailPageState extends State<_ListingDetailPage> {
+  static const _reportReasons = [
+    'Yanlış kategori',
+    'Uygunsuz açıklama',
+    'Şüpheli iletişim bilgisi',
+    'İlan artık geçerli değil',
+  ];
+
   late ListingRequest? _request = widget.request;
   bool _isChangingRequest = false;
+  bool _isReporting = false;
 
   Future<void> _toggleInterest() async {
     if (_isChangingRequest) return;
@@ -483,6 +504,90 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
       _request = updatedRequest;
       _isChangingRequest = false;
     });
+  }
+
+  Future<void> _reportListing() async {
+    if (_isReporting) return;
+
+    final userId = widget.currentUserId;
+    if (widget.hasFirebase && userId == null) {
+      _showMessage('İlan bildirmek için giriş yapmalısınız.');
+      return;
+    }
+
+    if (userId != null && widget.listing.ownerId == userId) {
+      _showMessage('Kendi ilanınızı bildiremezsiniz.');
+      return;
+    }
+
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'İlanı neden bildiriyorsunuz?',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._reportReasons.map(
+                  (reason) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.flag_outlined),
+                    title: Text(reason),
+                    onTap: () => Navigator.of(context).pop(reason),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (reason == null || !mounted) return;
+
+    setState(() => _isReporting = true);
+    final listing = widget.listing;
+    final report = ListingReport(
+      id: '${userId ?? 'local-user'}-${listing.id}'.replaceAll('/', '-'),
+      listingId: listing.id,
+      listingOwnerId: listing.ownerId,
+      listingTitle: listing.title,
+      listingAmount: listing.amount,
+      listingLocation: listing.location,
+      reporterId: userId ?? 'local-user',
+      reporterName: widget.currentUserName ?? 'Kullanıcı',
+      reason: reason,
+      status: ListingReportStatus.open,
+      createdAt: DateTime.now(),
+    );
+    final isSaved = await widget.repository.addReport(report);
+
+    if (!mounted) return;
+
+    setState(() => _isReporting = false);
+    _showMessage(
+      isSaved
+          ? 'İlan bildirildi. Moderatör inceleyebilir.'
+          : 'İlan şu anda bildirilemedi.',
+    );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
   }
 
   @override
@@ -579,6 +684,16 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
                         : _request != null
                         ? 'Talebi Geri Al'
                         : 'İlgileniyorum',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _isReporting ? null : _reportListing,
+                  icon: Icon(
+                    _isReporting ? Icons.hourglass_empty : Icons.flag_outlined,
+                  ),
+                  label: Text(
+                    _isReporting ? 'Bildiriliyor...' : 'İlanı Bildir',
                   ),
                 ),
               ],

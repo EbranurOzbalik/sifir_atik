@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
@@ -124,6 +125,66 @@ void main() {
       expect(isDeleted, isTrue);
       expect(requests, isEmpty);
     });
+
+    test('açık ilan bildirimlerini listeler', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = ListingRepository(firestore: firestore);
+      final report = _report(id: 'report-1');
+
+      final isSaved = await repository.addReport(report);
+      final reports = await repository.watchOpenReports().first;
+
+      expect(isSaved, isTrue);
+      expect(reports, hasLength(1));
+      expect(reports.single.reason, 'Yanlış kategori');
+    });
+
+    test('bildirim incelenince açık listeden çıkar', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = ListingRepository(firestore: firestore);
+      final report = _report(id: 'report-1');
+
+      await repository.addReport(report);
+      final isResolved = await repository.resolveReport(report.id);
+      final reports = await repository.watchOpenReports().first;
+
+      expect(isResolved, isTrue);
+      expect(reports, isEmpty);
+    });
+
+    test('moderatör ilanı kaldırınca bağlı kayıtlar temizlenir', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = ListingRepository(firestore: firestore);
+      final listing = _listing(id: 'listing-1');
+
+      await repository.addListing(listing);
+      await repository.addRequest(
+        _request(
+          id: 'request-1',
+          listingId: listing.id,
+          listingOwnerId: listing.ownerId,
+        ),
+      );
+      await repository.addReport(
+        _report(
+          id: 'report-1',
+          listingId: listing.id,
+          listingOwnerId: listing.ownerId,
+        ),
+      );
+
+      final isDeleted = await repository.deleteReportedListing(listing.id);
+      final listings = await repository.watchMyListings(listing.ownerId).first;
+      final requests = await repository
+          .watchRequestsByRequester('user-1')
+          .first;
+      final reports = await repository.watchOpenReports().first;
+
+      expect(isDeleted, isTrue);
+      expect(listings, isEmpty);
+      expect(requests, isEmpty);
+      expect(reports, isEmpty);
+    });
   });
 }
 
@@ -167,6 +228,26 @@ ListingRequest _request({
     requesterId: 'user-1',
     requesterName: 'Zeynep',
     status: ListingRequestStatus.pending,
+    createdAt: DateTime(2026, 9, 8),
+  );
+}
+
+ListingReport _report({
+  String id = 'report-1',
+  String listingId = 'listing-1',
+  String listingOwnerId = 'owner-1',
+}) {
+  return ListingReport(
+    id: id,
+    listingId: listingId,
+    listingOwnerId: listingOwnerId,
+    listingTitle: 'Temiz karton kutular',
+    listingAmount: '10 kg',
+    listingLocation: 'Trabzon / Ortahisar',
+    reporterId: 'user-1',
+    reporterName: 'Zeynep',
+    reason: 'Yanlış kategori',
+    status: ListingReportStatus.open,
     createdAt: DateTime(2026, 9, 8),
   );
 }
