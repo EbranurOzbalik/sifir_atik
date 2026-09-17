@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/main.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_report.dart';
@@ -7,8 +8,10 @@ import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/screens/create_listing_page.dart';
 import 'package:sifir_atik/screens/home_page.dart';
 import 'package:sifir_atik/screens/listings_page.dart';
+import 'package:sifir_atik/screens/moderation_page.dart';
 import 'package:sifir_atik/screens/my_requests_page.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/moderation_ai_service.dart';
 
 void main() {
   testWidgets('login page shows its primary controls', (tester) async {
@@ -183,16 +186,89 @@ void main() {
     expect(find.text('Temiz karton kutular'), findsOneWidget);
   });
 
-  testWidgets('home shows four main actions without profile shortcut', (
+  testWidgets('home shows four main actions and opens profile shortcut', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    expect(find.byTooltip('Profilim'), findsNothing);
+    expect(find.byTooltip('Profilim'), findsOneWidget);
     expect(find.text('Atık İlanı Ver'), findsOneWidget);
     expect(find.text('İlanları Gör'), findsOneWidget);
     expect(find.text('İlanlarım'), findsOneWidget);
     expect(find.text('Taleplerim'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Profilim'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Çıkış Yap'), findsOneWidget);
+    expect(find.text('Hesabımı Sil'), findsOneWidget);
+  });
+
+  testWidgets('AI moderator reviews a reported listing without acting', (
+    tester,
+  ) async {
+    final report = ListingReport(
+      id: 'report-1',
+      listingId: 'listing-1',
+      listingOwnerId: 'owner-1',
+      listingTitle: 'Şüpheli elektronik ilanı',
+      listingAmount: '2 adet',
+      listingLocation: 'Ortahisar',
+      listingCategory: 'Elektronik',
+      listingDescription: 'Detay için başka numaraya ödeme gönderin.',
+      reporterId: 'user-1',
+      reporterName: 'Zeynep',
+      reason: 'Şüpheli iletişim bilgisi',
+      status: ListingReportStatus.open,
+      createdAt: DateTime(2026, 9, 17),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ModerationPage(
+          repository: _FakeListingRepository(reports: [report]),
+          aiClient: _FakeModerationAiClient(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Akıllı ön inceleme'), findsOneWidget);
+    await tester.tap(find.text('Ön İnceleme Yap'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Yüksek risk'), findsOneWidget);
+    expect(find.text('Kaldırılması değerlendirilmeli'), findsOneWidget);
+    expect(find.textContaining('kendiliğinden uygulanmaz'), findsOneWidget);
+  });
+
+  test('waste categories include detailed listing options', () {
+    expect(wasteCategories, containsAll(['Tekstil', 'Pil', 'Atık Yağ']));
+    expect(listingFilterCategories.first, 'Tümü');
+  });
+
+  test('local moderation fallback flags suspicious payment content', () async {
+    final report = ListingReport(
+      id: 'report-2',
+      listingId: 'listing-2',
+      listingOwnerId: 'owner-2',
+      listingTitle: 'Elektronik atık',
+      listingAmount: '1 adet',
+      listingLocation: 'Ortahisar',
+      listingCategory: 'Elektronik',
+      listingDescription: 'Kapora için IBAN üzerinden ödeme gönderin.',
+      reporterId: 'user-2',
+      reporterName: 'Kullanıcı',
+      reason: 'Şüpheli iletişim bilgisi',
+      status: ListingReportStatus.open,
+      createdAt: DateTime(2026, 9, 17),
+    );
+
+    final assessment = await ModerationAiService().analyze(report);
+
+    expect(assessment.isLocalFallback, isTrue);
+    expect(assessment.risk, ModerationRisk.high);
+    expect(assessment.recommendation, ModerationRecommendation.considerRemoval);
   });
 
   testWidgets('home actions open my listings and requests screens', (
@@ -486,11 +562,13 @@ class _FakeListingRepository extends ListingRepository {
   _FakeListingRepository({
     this.listings = const [],
     this.requests = const [],
+    this.reports = const [],
     this.shouldSaveRequest = true,
   });
 
   final List<Listing> listings;
   final List<ListingRequest> requests;
+  final List<ListingReport> reports;
   final bool shouldSaveRequest;
   int addRequestCount = 0;
   int addReportCount = 0;
@@ -507,6 +585,9 @@ class _FakeListingRepository extends ListingRepository {
   }
 
   @override
+  Stream<List<ListingReport>> watchOpenReports() => Stream.value(reports);
+
+  @override
   Future<bool> addRequest(ListingRequest request) async {
     addRequestCount += 1;
     return shouldSaveRequest;
@@ -517,5 +598,17 @@ class _FakeListingRepository extends ListingRepository {
     addReportCount += 1;
     lastReport = report;
     return true;
+  }
+}
+
+class _FakeModerationAiClient implements ModerationAiClient {
+  @override
+  Future<ModerationAssessment> analyze(ListingReport report) async {
+    return const ModerationAssessment(
+      risk: ModerationRisk.high,
+      recommendation: ModerationRecommendation.considerRemoval,
+      summary: 'İlanda şüpheli ödeme yönlendirmesi bulunuyor.',
+      reason: 'Kullanıcı uygulama dışındaki bir numaraya yönlendiriliyor.',
+    );
   }
 }

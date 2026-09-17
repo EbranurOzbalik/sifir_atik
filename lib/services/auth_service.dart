@@ -61,6 +61,29 @@ class AuthService {
     }
   }
 
+  Future<void> deleteCurrentAccount() async {
+    _checkFirebase();
+
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthServiceException(
+        'Silinecek kullanıcı hesabı bulunamadı.',
+      );
+    }
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (error) {
+      if (error.code == 'requires-recent-login') {
+        throw const AuthServiceException(
+          'Hesabı silmek için çıkış yapıp yeniden giriş yaptıktan sonra tekrar deneyin.',
+        );
+      }
+
+      throw AuthServiceException(_messageForCode(error.code));
+    }
+  }
+
   Future<void> signInWithGoogle() async {
     _checkFirebase();
 

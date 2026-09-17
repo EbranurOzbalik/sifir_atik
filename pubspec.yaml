@@ -44,6 +44,8 @@ dependencies:
   mime: ^2.1.0
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
+  firebase_ai: ^4.0.0
+  firebase_app_check: ^0.4.8
 
 dev_dependencies:
   flutter_test:

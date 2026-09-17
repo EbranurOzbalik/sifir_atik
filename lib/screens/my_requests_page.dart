@@ -100,47 +100,45 @@ class _RequestsSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: colorScheme.surface.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(18),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.handshake_outlined,
+                color: colorScheme.primary,
+                size: 27,
+              ),
             ),
-            child: Icon(
-              Icons.handshake_outlined,
-              color: colorScheme.primary,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Taleplerinin durumu',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Taleplerinin durumu',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$_acceptedCount kabul edildi · $_pendingCount bekliyor',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '$_acceptedCount kabul edildi · $_pendingCount bekliyor',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -222,14 +220,13 @@ class _RequestCard extends StatelessWidget {
       elevation: 0,
       color: colorScheme.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(statusInfo.icon, color: statusInfo.color),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     listingTitle,
@@ -238,27 +235,56 @@ class _RequestCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusInfo.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(statusInfo.icon, size: 17, color: statusInfo.color),
+                      const SizedBox(width: 6),
+                      Text(
+                        statusInfo.label,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: statusInfo.color,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              listingInfo,
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Talep gönderildi: ${_formatRequestDate(request.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
             const SizedBox(height: 12),
-            Chip(
-              label: Text(statusInfo.label),
-              avatar: Icon(statusInfo.icon, size: 18),
-              backgroundColor: statusInfo.color.withValues(alpha: 0.12),
-              side: BorderSide.none,
+            Wrap(
+              spacing: 14,
+              runSpacing: 8,
+              children: [
+                _RequestMeta(icon: Icons.scale_outlined, text: listingInfo),
+                _RequestMeta(
+                  icon: Icons.calendar_today_outlined,
+                  text:
+                      'Talep gönderildi: ${_formatRequestDate(request.createdAt)}',
+                ),
+              ],
             ),
+            if (request.status == ListingRequestStatus.pending) ...[
+              const SizedBox(height: 14),
+              Text(
+                'İlan sahibinin yanıtı bekleniyor.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             if (request.status == ListingRequestStatus.accepted &&
                 request.ownerContactInfo.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -266,8 +292,8 @@ class _RequestCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(18),
+                  color: colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: colorScheme.primary.withValues(alpha: 0.18),
                   ),
@@ -349,6 +375,32 @@ class _RequestCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RequestMeta extends StatelessWidget {
+  const _RequestMeta({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 17, color: colorScheme.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }

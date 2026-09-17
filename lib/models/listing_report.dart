@@ -10,6 +10,8 @@ class ListingReport {
     required this.listingTitle,
     required this.listingAmount,
     required this.listingLocation,
+    this.listingCategory = '',
+    this.listingDescription = '',
     required this.reporterId,
     required this.reporterName,
     required this.reason,
@@ -23,6 +25,8 @@ class ListingReport {
   final String listingTitle;
   final String listingAmount;
   final String listingLocation;
+  final String listingCategory;
+  final String listingDescription;
   final String reporterId;
   final String reporterName;
   final String reason;
@@ -43,6 +47,8 @@ class ListingReport {
       listingTitle: data['listingTitle'] as String? ?? 'İlan bulunamadı',
       listingAmount: data['listingAmount'] as String? ?? '',
       listingLocation: data['listingLocation'] as String? ?? '',
+      listingCategory: data['listingCategory'] as String? ?? '',
+      listingDescription: data['listingDescription'] as String? ?? '',
       reporterId: data['reporterId'] as String? ?? '',
       reporterName: data['reporterName'] as String? ?? 'Kullanıcı',
       reason: data['reason'] as String? ?? 'Uygunsuz ilan',
@@ -63,6 +69,8 @@ class ListingReport {
       'listingTitle': listingTitle,
       'listingAmount': listingAmount,
       'listingLocation': listingLocation,
+      'listingCategory': listingCategory,
+      'listingDescription': listingDescription,
       'reporterId': reporterId,
       'reporterName': reporterName,
       'reason': reason,

@@ -1,8 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 import 'screens/auth_gate.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +25,18 @@ Future<void> main() async {
     );
   }
 
+  if (Firebase.apps.isNotEmpty) {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        providerAndroid: kDebugMode
+            ? const AndroidDebugProvider()
+            : const AndroidPlayIntegrityProvider(),
+      );
+    } catch (error) {
+      debugPrint('Firebase App Check başlatılamadı: $error');
+    }
+  }
+
   runApp(const SifirAtikApp());
 }
 
@@ -30,71 +45,10 @@ class SifirAtikApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF2E7D32),
-    );
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Sıfır Atık',
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7FAF7),
-        appBarTheme: AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: const Color(0xFFF7FAF7),
-          foregroundColor: colorScheme.onSurface,
-          titleTextStyle: TextStyle(
-            color: colorScheme.onSurface,
-            fontFamily: 'Roboto',
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: colorScheme.outlineVariant),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
-          ),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-      ),
+      theme: AppTheme.light,
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
 

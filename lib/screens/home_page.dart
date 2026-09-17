@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/theme/app_theme.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'create_listing_page.dart';
@@ -9,6 +10,7 @@ import 'listings_page.dart';
 import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key, this.repository = const ListingRepository()});
@@ -23,183 +25,198 @@ class HomePage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sıfır Atık')),
-      body: SafeArea(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                colorScheme.primaryContainer.withValues(alpha: 0.28),
-                colorScheme.surface,
-              ],
-            ),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final useHorizontalLayout = constraints.maxWidth >= 600;
-              final createListingCard = _ActionCard(
-                icon: Icons.add_photo_alternate_outlined,
-                title: 'Atık İlanı Ver',
-                description: 'Fotoğraf ekle ve ilanını paylaş.',
-                color: colorScheme.primary,
-                backgroundColor: colorScheme.primaryContainer,
-                onTap: () {
+      appBar: AppBar(
+        title: const Text('Sıfır Atık'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Tooltip(
+              message: 'Profilim',
+              child: TextButton.icon(
+                onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => const CreateListingPage(),
+                      builder: (_) => ProfilePage(repository: repository),
                     ),
                   );
                 },
-              );
-              final viewListingsCard = _ActionCard(
-                icon: Icons.view_list_outlined,
-                title: 'İlanları Gör',
-                description: 'Çevrendeki atık ilanlarını keşfet.',
-                color: colorScheme.tertiary,
-                backgroundColor: colorScheme.tertiaryContainer,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ListingsPage(),
-                    ),
-                  );
-                },
-              );
-              final myListingsCard = _ActionCard(
-                icon: Icons.inventory_2_outlined,
-                title: 'İlanlarım',
-                description: 'Paylaştığım ilanları yönet.',
-                color: colorScheme.secondary,
-                backgroundColor: colorScheme.secondaryContainer,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const MyListingsPage(),
-                    ),
-                  );
-                },
-              );
-              final myRequestsCard = _ActionCard(
-                icon: Icons.handshake_outlined,
-                title: 'Taleplerim',
-                description: 'Gönderdiğin talepleri takip et.',
-                color: colorScheme.primary,
-                backgroundColor: colorScheme.primaryContainer,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const MyRequestsPage(),
-                    ),
-                  );
-                },
-              );
-              final reportedListingsCard = _ActionCard(
-                icon: Icons.flag_outlined,
-                title: 'Bildirilen İlanlar',
-                description: 'Gelen bildirimleri incele.',
-                color: colorScheme.error,
-                backgroundColor: colorScheme.errorContainer,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ModerationPage(repository: repository),
-                    ),
-                  );
-                },
-              );
-              final user = _user;
-
-              return SingleChildScrollView(
-                padding: responsivePagePadding(context, top: 10),
-                child: ResponsiveContent(
-                  maxWidth: 900,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _HomeHeader(colorScheme: colorScheme),
-                      const SizedBox(height: 28),
-                      Text(
-                        'Ne yapmak istersiniz?',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      if (useHorizontalLayout)
-                        Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: createListingCard),
-                                const SizedBox(width: 16),
-                                Expanded(child: viewListingsCard),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: myListingsCard),
-                                const SizedBox(width: 16),
-                                Expanded(child: myRequestsCard),
-                              ],
-                            ),
-                            if (user != null)
-                              FutureBuilder<bool>(
-                                future: repository.isModerator(user.uid),
-                                builder: (context, snapshot) {
-                                  if (snapshot.data != true) {
-                                    return const SizedBox.shrink();
-                                  }
-
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 16),
-                                    child: reportedListingsCard,
-                                  );
-                                },
-                              ),
-                          ],
-                        )
-                      else
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            createListingCard,
-                            const SizedBox(height: 14),
-                            viewListingsCard,
-                            const SizedBox(height: 14),
-                            myListingsCard,
-                            const SizedBox(height: 14),
-                            myRequestsCard,
-                            if (user != null)
-                              FutureBuilder<bool>(
-                                future: repository.isModerator(user.uid),
-                                builder: (context, snapshot) {
-                                  if (snapshot.data != true) {
-                                    return const SizedBox.shrink();
-                                  }
-
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      const SizedBox(height: 14),
-                                      reportedListingsCard,
-                                    ],
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                    ],
+                icon: const Icon(Icons.person_outline_rounded, size: 20),
+                label: const Text('Profilim'),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  backgroundColor: colorScheme.surface,
+                  side: BorderSide(color: colorScheme.outlineVariant),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useHorizontalLayout = constraints.maxWidth >= 600;
+            final createListingCard = _ActionCard(
+              icon: Icons.add_photo_alternate_outlined,
+              title: 'Atık İlanı Ver',
+              description: 'Fotoğraf ekle ve ilanını paylaş.',
+              color: colorScheme.primary,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CreateListingPage(),
+                  ),
+                );
+              },
+            );
+            final viewListingsCard = _ActionCard(
+              icon: Icons.view_list_outlined,
+              title: 'İlanları Gör',
+              description: 'Çevrendeki atık ilanlarını keşfet.',
+              color: colorScheme.secondary,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const ListingsPage()),
+                );
+              },
+            );
+            final myListingsCard = _ActionCard(
+              icon: Icons.inventory_2_outlined,
+              title: 'İlanlarım',
+              description: 'Paylaştığım ilanları yönet.',
+              color: colorScheme.tertiary,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MyListingsPage(),
+                  ),
+                );
+              },
+            );
+            final myRequestsCard = _ActionCard(
+              icon: Icons.handshake_outlined,
+              title: 'Taleplerim',
+              description: 'Gönderdiğin talepleri takip et.',
+              color: colorScheme.primary,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MyRequestsPage(),
+                  ),
+                );
+              },
+            );
+            final reportedListingsCard = _ActionCard(
+              icon: Icons.flag_outlined,
+              title: 'Bildirilen İlanlar',
+              description: 'Gelen bildirimleri incele.',
+              color: colorScheme.error,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ModerationPage(repository: repository),
+                  ),
+                );
+              },
+            );
+            final user = _user;
+
+            return SingleChildScrollView(
+              padding: responsivePagePadding(context, top: 10),
+              child: ResponsiveContent(
+                maxWidth: 900,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _HomeHeader(colorScheme: colorScheme),
+                    const SizedBox(height: 28),
+                    Text(
+                      'Ne yapmak istersiniz?',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    if (useHorizontalLayout)
+                      Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: createListingCard),
+                              const SizedBox(width: 16),
+                              Expanded(child: viewListingsCard),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: myListingsCard),
+                              const SizedBox(width: 16),
+                              Expanded(child: myRequestsCard),
+                            ],
+                          ),
+                          if (user != null)
+                            FutureBuilder<bool>(
+                              future: repository.isModerator(user.uid),
+                              builder: (context, snapshot) {
+                                if (snapshot.data != true) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: reportedListingsCard,
+                                );
+                              },
+                            ),
+                        ],
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          createListingCard,
+                          const SizedBox(height: 14),
+                          viewListingsCard,
+                          const SizedBox(height: 14),
+                          myListingsCard,
+                          const SizedBox(height: 14),
+                          myRequestsCard,
+                          if (user != null)
+                            FutureBuilder<bool>(
+                              future: repository.isModerator(user.uid),
+                              builder: (context, snapshot) {
+                                if (snapshot.data != true) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    const SizedBox(height: 14),
+                                    reportedListingsCard,
+                                  ],
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -238,16 +255,16 @@ class _HomeHeader extends StatelessWidget {
         ),
         const SizedBox(width: 18),
         Container(
-          width: 58,
-          height: 58,
+          width: 54,
+          height: 54,
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.75),
-            shape: BoxShape.circle,
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
             Icons.recycling_rounded,
-            color: colorScheme.primary,
-            size: 34,
+            color: colorScheme.onPrimary,
+            size: 30,
           ),
         ),
       ],
@@ -261,7 +278,6 @@ class _ActionCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.color,
-    required this.backgroundColor,
     required this.onTap,
   });
 
@@ -269,126 +285,97 @@ class _ActionCard extends StatelessWidget {
   final String title;
   final String description;
   final Color color;
-  final Color backgroundColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.14),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(26),
-        clipBehavior: Clip.antiAlias,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                backgroundColor.withValues(alpha: 0.88),
-                colorScheme.surfaceContainerLow,
-              ],
-            ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 340;
-              final padding = isNarrow ? 16.0 : 20.0;
-              final iconSize = isNarrow ? 48.0 : 56.0;
-              final arrowSize = isNarrow ? 32.0 : 36.0;
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 340;
+            final padding = isNarrow ? 15.0 : 17.0;
+            final iconSize = isNarrow ? 46.0 : 50.0;
 
-              return InkWell(
-                onTap: onTap,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: isNarrow ? 100 : 108),
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: iconSize,
-                          height: iconSize,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(
-                              isNarrow ? 16 : 18,
+            return InkWell(
+              onTap: onTap,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: isNarrow ? 92 : 96),
+                child: Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: iconSize,
+                        height: iconSize,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.09),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          icon,
+                          size: isNarrow ? 24 : 26,
+                          color: color,
+                        ),
+                      ),
+                      SizedBox(width: isNarrow ? 12 : 15),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  (isNarrow
+                                          ? Theme.of(
+                                              context,
+                                            ).textTheme.titleSmall
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium)
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.1,
+                                      ),
                             ),
-                          ),
-                          child: Icon(
-                            icon,
-                            size: isNarrow ? 26 : 30,
-                            color: color,
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    height: 1.3,
+                                  ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: isNarrow ? 12 : 16),
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style:
-                                    (isNarrow
-                                            ? Theme.of(
-                                                context,
-                                              ).textTheme.titleSmall
-                                            : Theme.of(
-                                                context,
-                                              ).textTheme.titleMedium)
-                                        ?.copyWith(fontWeight: FontWeight.w900),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                      height: 1.35,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: isNarrow ? 8 : 12),
-                        Container(
-                          width: arrowSize,
-                          height: arrowSize,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            color: color,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                        size: 17,
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

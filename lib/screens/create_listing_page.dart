@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sifir_atik/data/turkey_locations.dart';
+import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
@@ -20,14 +21,7 @@ class CreateListingPage extends StatefulWidget {
 }
 
 class _CreateListingPageState extends State<CreateListingPage> {
-  static const _categories = [
-    'Kağıt',
-    'Plastik',
-    'Cam',
-    'Metal',
-    'Elektronik',
-    'Diğer',
-  ];
+  static const _categories = wasteCategories;
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
@@ -354,8 +348,9 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
     if (error.code == 'app-not-authorized' ||
         message.contains('app is not authorized') ||
-        message.contains('invalid app info')) {
-      return 'Android uygulama kimliği henüz Firebase tarafından doğrulanamadı.';
+        message.contains('invalid app info') ||
+        message.contains('play_integrity_token')) {
+      return 'Emülatörde uygulama doğrulaması tamamlanamadı. Gerçek SMS için fiziksel Android cihaz kullanın.';
     }
 
     return switch (error.code) {

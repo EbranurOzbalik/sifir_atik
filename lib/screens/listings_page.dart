@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
@@ -29,7 +30,7 @@ class ListingsPage extends StatefulWidget {
 }
 
 class _ListingsPageState extends State<ListingsPage> {
-  static const _categories = ['Tümü', 'Kağıt', 'Plastik', 'Cam', 'Elektronik'];
+  static const _categories = listingFilterCategories;
 
   final Map<String, ListingRequest> _requestsByListingId = {};
   final Set<String> _savingRequestListingIds = {};
@@ -378,18 +379,12 @@ class _ListingCard extends StatelessWidget {
                 width: 92,
                 height: 92,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _listingColor(listing).withValues(alpha: 0.12),
-                      blurRadius: 14,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: _ListingImage(
                   listing: listing,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(14),
                   padding: const EdgeInsets.all(8),
                 ),
               ),
@@ -564,6 +559,8 @@ class _ListingDetailPageState extends State<_ListingDetailPage> {
       listingTitle: listing.title,
       listingAmount: listing.amount,
       listingLocation: listing.location,
+      listingCategory: listing.category,
+      listingDescription: listing.description,
       reporterId: userId ?? 'local-user',
       reporterName: widget.currentUserName ?? 'Kullanıcı',
       reason: reason,

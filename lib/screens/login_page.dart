@@ -513,19 +513,13 @@ class _Header extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 160,
-          height: 138,
-          padding: const EdgeInsets.all(12),
+          width: 144,
+          height: 124,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: colorScheme.outlineVariant),
           ),
           child: Image.asset(
             'assets/images/zero_waste_logo.png',
