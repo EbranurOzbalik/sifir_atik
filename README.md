@@ -5,9 +5,9 @@ Flutter mobil uygulamasıdır. Projede temel amaç; karton, cam, plastik veya
 elektronik gibi değerlendirilebilir atıkların ihtiyaç duyan kişiler tarafından
 daha kolay bulunmasını sağlamaktır.
 
-Bu projeyi Android odaklı geliştirdim ve denemelerimi Android emülatör üzerinde
-yaptım. Flutter projesi olduğu için iOS klasörü de duruyor; fakat iOS tarafını
-ayrıca test etmedim.
+Projeyi Flutter ile Android ve iOS için geliştirdim. Temel kullanıcı akışlarını
+Android emülatörde, iOS derleme ve arayüz kontrolünü ise iPhone simülatöründe
+denedim. iOS sürümü için minimum desteklenen işletim sistemi iOS 15'tir.
 
 ## Projenin Amacı
 
@@ -24,6 +24,7 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 ### Giriş ve kullanıcı akışı
 
 - E-posta ve şifre ile kayıt olma / giriş yapma
+- Bireysel veya şirket / kurum hesabı oluşturma
 - Google ile giriş desteği
 - Şifre sıfırlama ekranı
 - Uygulama açıldığında oturum kontrolü
@@ -68,9 +69,12 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 
 ## Ekran Görüntüleri
 
+Giriş ve ana ekran görüntülerini iPhone simülatöründe, diğer işlev ekranlarını
+Android emülatörde aldım.
+
 ### Giriş ve ana ekran
 
-| Giriş | Ana ekran |
+| iOS giriş | iOS ana ekran |
 | --- | --- |
 | <img src="screenshots/01-login.png" width="260" alt="Giriş ekranı"> | <img src="screenshots/02-home.png" width="260" alt="Ana ekran"> |
 
@@ -96,7 +100,7 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 
 - Flutter
 - Dart
-- Material 3
+- Android ve iOS ile uyumlu Flutter arayüzü
 - Firebase Authentication
 - Cloud Firestore
 - Firebase Storage
@@ -107,11 +111,21 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 
 ## Projeyi Çalıştırma
 
-Flutter SDK ve Android geliştirme ortamı hazır olduktan sonra proje şu komutlarla
-çalıştırılabilir:
+Flutter SDK ve hedef platformun geliştirme ortamı hazır olduktan sonra proje şu
+komutlarla çalıştırılabilir:
 
 ```bash
 flutter pub get
+flutter run
+```
+
+iOS için Xcode ve CocoaPods kurulmuş olmalıdır. Bağımlılıklar gerekirse şu
+komutla hazırlanabilir:
+
+```bash
+cd ios
+pod install
+cd ..
 flutter run
 ```
 
@@ -140,7 +154,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Firestore kurallarında ilan sahibi ve moderatör kontrolü
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 35 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 42 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış
@@ -159,9 +173,11 @@ Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak dened
 
 ## Şu Anki Durum
 
-Proje şu anda Android emülatörde demo yapılabilecek seviyede. Kullanıcı giriş
-yapabiliyor, ilan oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor,
-kendi ilanlarını yönetebiliyor, başka ilanlara talep gönderebiliyor ve uygunsuz ilanlar moderatör tarafından incelenebiliyor.
+Proje Android emülatörde demo yapılabilecek, iOS 15 ve üzeri simülatörlerde de
+derlenip açılabilecek seviyededir. Kullanıcı giriş yapabiliyor, ilan
+oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor, kendi ilanlarını
+yönetebiliyor, başka ilanlara talep gönderebiliyor ve uygunsuz ilanlar moderatör
+tarafından incelenebiliyor.
 
-İleride iOS tarafı ayrıca test edilebilir. Play Store için de debug imza yerine
-ayrı bir release imzası hazırlanması gerekir.
+Google Play ve App Store dağıtımı öncesinde mağaza imzaları, gizlilik metinleri
+ve gerçek cihaz kontrolleri ayrıca tamamlanmalıdır.
