@@ -44,9 +44,27 @@ void main() {
     await tester.tap(find.text('Kayıt Ol'));
     await tester.pump();
 
+    expect(find.text('Hesap türü'), findsOneWidget);
+    expect(find.text('Bireysel'), findsOneWidget);
+    expect(find.text('Şirket / Kurum'), findsOneWidget);
+    expect(find.text('Ad soyad'), findsOneWidget);
     expect(find.text('Şifre tekrar'), findsOneWidget);
     expect(find.text('Hesap Oluştur'), findsOneWidget);
     expect(find.text('Zaten hesabın var mı?'), findsOneWidget);
+  });
+
+  testWidgets('organization registration changes the name field', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const SifirAtikApp());
+
+    await tester.ensureVisible(find.text('Kayıt Ol'));
+    await tester.tap(find.text('Kayıt Ol'));
+    await tester.pump();
+    await tester.tap(find.text('Şirket / Kurum'));
+    await tester.pump();
+
+    expect(find.text('Şirket / kurum adı'), findsOneWidget);
   });
 
   testWidgets('login shows firebase warning when auth is not ready', (
@@ -69,8 +87,7 @@ void main() {
   testWidgets('home action opens the create listing screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('Atık İlanı Ver'));
-    await tester.tap(find.text('Atık İlanı Ver'));
+    await tester.tap(find.text('İlan Ver'));
     await tester.pumpAndSettle();
     expect(find.text('Yeni ilan oluştur'), findsOneWidget);
   });
@@ -80,8 +97,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('Atık İlanı Ver'));
-    await tester.tap(find.text('Atık İlanı Ver'));
+    await tester.tap(find.text('İlan Ver'));
     await tester.pumpAndSettle();
 
     expect(find.text('Miktar'), findsOneWidget);
@@ -110,8 +126,7 @@ void main() {
   testWidgets('create listing requires a valid phone number', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('Atık İlanı Ver'));
-    await tester.tap(find.text('Atık İlanı Ver'));
+    await tester.tap(find.text('İlan Ver'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Karton Kutular');
@@ -178,29 +193,31 @@ void main() {
   testWidgets('home action opens the listings screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('İlanları Gör'));
-    await tester.tap(find.text('İlanları Gör'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keşfet'));
+    await tester.pump();
 
     expect(find.text('İlanlarda ara'), findsOneWidget);
     expect(find.text('Temiz karton kutular'), findsOneWidget);
   });
 
-  testWidgets('home shows four main actions and opens profile shortcut', (
+  testWidgets('home shows main navigation and opens profile shortcut', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
     expect(find.byTooltip('Profilim'), findsOneWidget);
-    expect(find.text('Atık İlanı Ver'), findsOneWidget);
-    expect(find.text('İlanları Gör'), findsOneWidget);
-    expect(find.text('İlanlarım'), findsOneWidget);
-    expect(find.text('Taleplerim'), findsOneWidget);
+    expect(find.text('Ana Sayfa'), findsOneWidget);
+    expect(find.text('Keşfet'), findsOneWidget);
+    expect(find.text('İlan Ver'), findsOneWidget);
+    expect(find.text('Talepler'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Profilim'));
     await tester.pumpAndSettle();
 
     expect(find.text('Çıkış Yap'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -350));
+    await tester.pump();
     expect(find.text('Hesabımı Sil'), findsOneWidget);
   });
 
@@ -271,21 +288,26 @@ void main() {
     expect(assessment.recommendation, ModerationRecommendation.considerRemoval);
   });
 
-  testWidgets('home actions open my listings and requests screens', (
+  testWidgets('home navigation opens my listings and requests screens', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('İlanlarım'));
+    await tester.scrollUntilVisible(
+      find.text('İlanlarım'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -120));
+    await tester.pump();
     await tester.tap(find.text('İlanlarım'));
     await tester.pumpAndSettle();
     expect(find.text('Giriş bulunamadı'), findsOneWidget);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Taleplerim'));
-    await tester.tap(find.text('Taleplerim'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Talepler'));
+    await tester.pump();
     expect(
       find.text('Taleplerinizi görmek için giriş yapmalısınız.'),
       findsOneWidget,
@@ -295,19 +317,16 @@ void main() {
   testWidgets('listing detail does not mark unsaved interest as sent', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+    await tester.pumpWidget(const MaterialApp(home: ListingsPage()));
 
-    await tester.ensureVisible(find.text('İlanları Gör'));
-    await tester.tap(find.text('İlanları Gör'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Temiz karton kutular'));
     await tester.pumpAndSettle();
 
     expect(find.text('İlan Detayı'), findsOneWidget);
-    expect(find.text('10 kg'), findsWidgets);
+    expect(find.textContaining('10 kg'), findsWidgets);
     expect(find.text('Açıklama'), findsOneWidget);
 
-    await tester.tap(find.text('İlgileniyorum'));
+    await tester.tap(find.text('Talep Et'));
     await tester.pump();
 
     expect(find.text('Talep İletildi'), findsNothing);
@@ -333,7 +352,7 @@ void main() {
 
     await tester.tap(find.text('Karton denemesi'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('İlgileniyorum'));
+    await tester.tap(find.text('Talep Et'));
     await tester.pump();
 
     expect(find.text('Kendi ilanınıza talep gönderemezsiniz.'), findsOneWidget);
@@ -362,7 +381,7 @@ void main() {
 
     await tester.tap(find.text('Karton denemesi'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('İlgileniyorum'));
+    await tester.tap(find.text('Talep Et'));
     await tester.pump();
 
     expect(repository.addRequestCount, 1);
@@ -456,7 +475,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Beklemede'), findsOneWidget);
+    expect(find.text('Beklemede'), findsWidgets);
     expect(find.text('Kabul edildi'), findsOneWidget);
     expect(find.text('İlan sahibinin telefonu'), findsOneWidget);
     expect(find.text('0555 111 22 33'), findsOneWidget);
@@ -493,7 +512,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Beklemede'), findsOneWidget);
+    expect(find.text('Beklemede'), findsWidgets);
     expect(find.text('İlan sahibinin telefonu'), findsNothing);
     expect(find.text('0555 111 22 33'), findsNothing);
     expect(find.text('Ara'), findsNothing);
@@ -503,9 +522,8 @@ void main() {
   testWidgets('listings can be searched and filtered', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    await tester.ensureVisible(find.text('İlanları Gör'));
-    await tester.tap(find.text('İlanları Gör'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keşfet'));
+    await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'cam');
     await tester.pump();

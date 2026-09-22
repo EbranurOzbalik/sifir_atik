@@ -35,6 +35,15 @@ void main() {
       expect(rules, contains('data.isModerator == true'));
     });
 
+    test('kullanıcı kendi profilinde moderatör yetkisi oluşturamaz', () {
+      expect(rules, contains("request.resource.data.role == 'user'"));
+      expect(
+        rules,
+        contains("!request.resource.data.keys().hasAny(['isModerator'])"),
+      );
+      expect(rules, contains("accountType in ['individual', 'organization']"));
+    });
+
     test('ilan bildirimleri yalnızca giriş yapan kullanıcıyla oluşturulur', () {
       expect(rules, contains('match /listingReports/{reportId}'));
       expect(

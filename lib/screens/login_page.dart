@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -15,6 +16,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -26,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isRegisterMode = false;
   bool _rememberMe = false;
   bool _isLoading = false;
+  AccountType _accountType = AccountType.individual;
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _displayNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -80,6 +84,19 @@ class _LoginPageState extends State<LoginPage> {
     final emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
     if (!emailPattern.hasMatch(email)) {
       return 'Geçerli bir e-posta adresi girin.';
+    }
+
+    return null;
+  }
+
+  String? _validateDisplayName(String? value) {
+    if (!_isRegisterMode) return null;
+
+    final displayName = value?.trim() ?? '';
+    if (displayName.length < 2) {
+      return _accountType == AccountType.organization
+          ? 'Şirket veya kurum adını yazın.'
+          : 'Adınızı ve soyadınızı yazın.';
     }
 
     return null;
@@ -125,6 +142,8 @@ class _LoginPageState extends State<LoginPage> {
         await _authService.registerWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          displayName: _displayNameController.text.trim(),
+          accountType: _accountType,
         );
         await _sessionPreferences.setRememberMe(_rememberMe);
 
@@ -157,10 +176,25 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInWithGoogle() async {
     if (_isLoading) return;
 
+    if (_isRegisterMode) {
+      final displayNameError = _validateDisplayName(
+        _displayNameController.text,
+      );
+      if (displayNameError != null) {
+        _showMessage(displayNameError);
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      await _authService.signInWithGoogle();
+      await _authService.signInWithGoogle(
+        displayName: _isRegisterMode
+            ? _displayNameController.text.trim()
+            : null,
+        accountType: _accountType,
+      );
       await _sessionPreferences.setRememberMe(_rememberMe);
 
       if (mounted) _openHomePage();
@@ -213,6 +247,8 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _isRegisterMode = !_isRegisterMode;
+      _accountType = AccountType.individual;
+      _displayNameController.clear();
       _confirmPasswordController.clear();
     });
   }
@@ -246,7 +282,57 @@ class _LoginPageState extends State<LoginPage> {
                           colorScheme: colorScheme,
                           isRegisterMode: _isRegisterMode,
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 30),
+                        if (_isRegisterMode) ...[
+                          Text(
+                            'Hesap türü',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: SegmentedButton<AccountType>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: AccountType.individual,
+                                  icon: Icon(Icons.person_outline),
+                                  label: Text('Bireysel'),
+                                ),
+                                ButtonSegment(
+                                  value: AccountType.organization,
+                                  icon: Icon(Icons.apartment_outlined),
+                                  label: Text('Şirket / Kurum'),
+                                ),
+                              ],
+                              selected: {_accountType},
+                              showSelectedIcon: false,
+                              onSelectionChanged: (selection) {
+                                setState(() => _accountType = selection.first);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          TextFormField(
+                            controller: _displayNameController,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            validator: _validateDisplayName,
+                            decoration: InputDecoration(
+                              labelText:
+                                  _accountType == AccountType.organization
+                                  ? 'Şirket / kurum adı'
+                                  : 'Ad soyad',
+                              prefixIcon: Icon(
+                                _accountType == AccountType.organization
+                                    ? Icons.apartment_outlined
+                                    : Icons.person_outline,
+                              ),
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                        ],
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -511,39 +597,51 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 144,
-          height: 124,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: colorScheme.outlineVariant),
-          ),
-          child: Image.asset(
-            'assets/images/zero_waste_logo.png',
-            semanticLabel: 'Sıfır atık görseli',
-            fit: BoxFit.contain,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              child: Image.asset(
+                'assets/images/zero_waste_logo.png',
+                semanticLabel: 'Sıfır atık görseli',
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Sıfır Atık',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
         Text(
-          'Sıfır Atık',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+          isRegisterMode ? 'Hesabını oluştur' : 'Tekrar hoş geldin',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Text(
           isRegisterMode
-              ? 'Yeni hesap oluşturup ilan paylaşmaya başlayın.'
-              : 'Daha sürdürülebilir bir gelecek için\naramıza hoş geldiniz.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              ? 'Bireysel veya kurum hesabınla ilan paylaşmaya başlayabilirsin.'
+              : 'İlanlarını ve taleplerini kaldığın yerden yönet.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
-            height: 1.4,
+            height: 1.45,
           ),
         ),
       ],

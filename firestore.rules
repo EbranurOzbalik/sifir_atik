@@ -13,6 +13,17 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null
         && request.auth.uid == userId;
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.accountType in ['individual', 'organization']
+        && request.resource.data.role == 'user'
+        && !request.resource.data.keys().hasAny(['isModerator']);
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).changedKeys()
+          .hasOnly(['displayName', 'accountType', 'updatedAt'])
+        && request.resource.data.accountType in ['individual', 'organization']
+        && request.resource.data.role == resource.data.role;
     }
 
     match /listings/{listingId} {

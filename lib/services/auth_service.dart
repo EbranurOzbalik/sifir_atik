@@ -2,14 +2,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sifir_atik/models/user_profile.dart';
+import 'package:sifir_atik/services/user_profile_repository.dart';
 
 class AuthService {
-  AuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
-    : _firebaseAuth = firebaseAuth,
-      _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+  AuthService({
+    FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+    UserProfileRepository profileRepository = const UserProfileRepository(),
+  }) : _firebaseAuth = firebaseAuth,
+       _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+       _profileRepository = profileRepository;
 
   final FirebaseAuth? _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final UserProfileRepository _profileRepository;
   Future<void>? _googleInitializeFuture;
 
   bool get isFirebaseReady => Firebase.apps.isNotEmpty;
@@ -38,13 +45,27 @@ class AuthService {
   Future<void> registerWithEmail({
     required String email,
     required String password,
+    required String displayName,
+    required AccountType accountType,
   }) async {
     _checkFirebase();
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
+      );
+      final user = credential.user;
+      if (user == null) {
+        throw const AuthServiceException('Kullanıcı hesabı oluşturulamadı.');
+      }
+
+      await user.updateDisplayName(displayName.trim());
+      await _profileRepository.createProfileIfMissing(
+        uid: user.uid,
+        displayName: displayName,
+        email: user.email ?? email,
+        accountType: accountType,
       );
     } on FirebaseAuthException catch (error) {
       throw AuthServiceException(_messageForCode(error.code));
@@ -84,7 +105,10 @@ class AuthService {
     }
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({
+    String? displayName,
+    AccountType accountType = AccountType.individual,
+  }) async {
     _checkFirebase();
 
     try {
@@ -101,7 +125,22 @@ class AuthService {
         idToken: googleAuthentication.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user != null) {
+        final resolvedName = displayName?.trim().isNotEmpty == true
+            ? displayName!.trim()
+            : user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!.trim()
+            : 'Kullanıcı';
+
+        await _profileRepository.createProfileIfMissing(
+          uid: user.uid,
+          displayName: resolvedName,
+          email: user.email ?? '',
+          accountType: accountType,
+        );
+      }
     } on FirebaseAuthException catch (error) {
       throw AuthServiceException(_messageForCode(error.code));
     } on GoogleSignInException catch (error) {
