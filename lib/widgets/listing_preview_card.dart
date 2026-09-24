@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
+import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
 
 class ListingPreviewCard extends StatelessWidget {
@@ -50,6 +51,20 @@ class ListingPreviewCard extends StatelessWidget {
                         color: categoryColor,
                       ),
                     ),
+                    if (listing.ownerAccountType == AccountType.organization)
+                      Positioned(
+                        left: 10,
+                        top: 48,
+                        child: _Badge(
+                          label: listing.isOwnerVerified
+                              ? 'Doğrulanmış kurum'
+                              : 'Kurumsal',
+                          color: colorScheme.primary,
+                          icon: listing.isOwnerVerified
+                              ? Icons.verified_rounded
+                              : Icons.apartment_rounded,
+                        ),
+                      ),
                     if (request != null)
                       Positioned(
                         right: 10,
@@ -197,10 +212,11 @@ Color requestStatusColor(ListingRequestStatus status) {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
+  const _Badge({required this.label, required this.color, this.icon});
 
   final String label;
   final Color color;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -211,14 +227,23 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w800,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

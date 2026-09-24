@@ -5,6 +5,7 @@ import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
+import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
 import 'package:sifir_atik/widgets/listing_preview_card.dart';
@@ -35,6 +36,7 @@ class _ListingsPageState extends State<ListingsPage> {
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'Tümü';
+  AccountType? _selectedOwnerType;
   List<Listing> _listings = sampleListings;
 
   bool get _hasFirebase => widget.isFirebaseReady ?? Firebase.apps.isNotEmpty;
@@ -61,8 +63,11 @@ class _ListingsPageState extends State<ListingsPage> {
           listing.title.toLowerCase().contains(query) ||
           listing.category.toLowerCase().contains(query) ||
           listing.location.toLowerCase().contains(query);
+      final matchesOwnerType =
+          _selectedOwnerType == null ||
+          listing.ownerAccountType == _selectedOwnerType;
 
-      return matchesCategory && matchesQuery;
+      return matchesCategory && matchesQuery && matchesOwnerType;
     }).toList();
   }
 
@@ -162,6 +167,54 @@ class _ListingsPageState extends State<ListingsPage> {
                           },
                           icon: const Icon(Icons.close_rounded),
                         ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            10,
+            horizontalPadding,
+            0,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: ResponsiveContent(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      selected: _selectedOwnerType == null,
+                      label: const Text('Tüm hesaplar'),
+                      onSelected: (_) {
+                        setState(() => _selectedOwnerType = null);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      selected: _selectedOwnerType == AccountType.individual,
+                      avatar: const Icon(Icons.person_outline, size: 17),
+                      label: const Text('Bireysel'),
+                      onSelected: (_) {
+                        setState(
+                          () => _selectedOwnerType = AccountType.individual,
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      selected: _selectedOwnerType == AccountType.organization,
+                      avatar: const Icon(Icons.apartment_outlined, size: 17),
+                      label: const Text('Kurumsal'),
+                      onSelected: (_) {
+                        setState(
+                          () => _selectedOwnerType = AccountType.organization,
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -666,7 +719,9 @@ class _OwnerCard extends StatelessWidget {
             radius: 24,
             backgroundColor: colorScheme.primaryContainer,
             child: Icon(
-              Icons.person_outline_rounded,
+              listing.ownerAccountType == AccountType.organization
+                  ? Icons.apartment_rounded
+                  : Icons.person_outline_rounded,
               color: colorScheme.primary,
             ),
           ),
@@ -684,11 +739,40 @@ class _OwnerCard extends StatelessWidget {
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  'İlan sahibi',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 5,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      listing.ownerAccountType == AccountType.organization
+                          ? 'Kurumsal ilan sahibi'
+                          : 'Bireysel ilan sahibi',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (listing.isOwnerVerified)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 15,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Doğrulanmış',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ],
             ),

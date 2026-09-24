@@ -65,6 +65,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Şirket / kurum adı'), findsOneWidget);
+    expect(find.text('Kurum türü'), findsOneWidget);
+    expect(find.text('Yetkili kişi'), findsOneWidget);
+    expect(find.text('Şehir'), findsOneWidget);
   });
 
   testWidgets('login shows firebase warning when auth is not ready', (
@@ -537,6 +540,19 @@ void main() {
     await tester.pump();
 
     expect(find.text('Uygun ilan bulunamadı.'), findsOneWidget);
+  });
+
+  testWidgets('listings can be filtered by account type', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ListingsPage()));
+    await tester.pump();
+
+    expect(find.text('Doğrulanmış kurum'), findsOneWidget);
+
+    await tester.tap(find.text('Kurumsal'));
+    await tester.pump();
+
+    expect(find.text('Cam kavanoz ve şişeler'), findsOneWidget);
+    expect(find.text('Temiz karton kutular'), findsNothing);
   });
 }
 

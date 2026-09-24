@@ -25,6 +25,8 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 
 - E-posta ve şifre ile kayıt olma / giriş yapma
 - Bireysel veya şirket / kurum hesabı oluşturma
+- Kurumsal kayıtta kurum türü, yetkili kişi ve şehir bilgilerini kaydetme
+- Profilde hesap türünü ve kurumsal doğrulama durumunu görme
 - Google ile giriş desteği
 - Şifre sıfırlama ekranı
 - Uygulama açıldığında oturum kontrolü
@@ -38,6 +40,8 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Şehir ve ilçeyi arayarak seçme
 - İlanları listeleme ve detayını görme
 - Kategoriye göre filtreleme
+- İlanları bireysel veya kurumsal hesap türüne göre filtreleme
+- Kurumsal ve doğrulanmış kurum ilanlarını rozetle ayırt etme
 - Başlık, kategori ve konuma göre arama yapma
 - Kullanıcının kendi ilanlarını düzenlemesi ve silmesi
 
@@ -152,9 +156,11 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Talep durumlarının ekranda doğru görünmesi
 - İlan düzenleme ve silme işlemlerinin talep verileriyle birlikte güncellenmesi
 - Firestore kurallarında ilan sahibi ve moderatör kontrolü
+- Hesap türü ve kurumsal doğrulama bilgilerinin güvenlik kontrolü
+- Bireysel ve kurumsal ilan filtreleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 42 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 45 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış

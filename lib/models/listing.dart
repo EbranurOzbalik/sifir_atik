@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sifir_atik/models/user_profile.dart';
 
 class Listing {
   const Listing({
@@ -14,6 +15,8 @@ class Listing {
     required this.imageAsset,
     this.contactInfo = '',
     this.imageUrl,
+    this.ownerAccountType = AccountType.individual,
+    this.isOwnerVerified = false,
   });
 
   final String id;
@@ -28,6 +31,8 @@ class Listing {
   final String imageAsset;
   final String contactInfo;
   final String? imageUrl;
+  final AccountType ownerAccountType;
+  final bool isOwnerVerified;
 
   Listing copyWith({
     String? title,
@@ -53,6 +58,8 @@ class Listing {
       imageAsset: imageAsset ?? this.imageAsset,
       contactInfo: contactInfo ?? this.contactInfo,
       imageUrl: clearImageUrl ? null : imageUrl ?? this.imageUrl,
+      ownerAccountType: ownerAccountType,
+      isOwnerVerified: isOwnerVerified,
     );
   }
 
@@ -76,6 +83,8 @@ class Listing {
           data['imageAsset'] as String? ?? listingImageForCategory('Diğer'),
       contactInfo: data['contactInfo'] as String? ?? '',
       imageUrl: data['imageUrl'] as String?,
+      ownerAccountType: AccountTypeText.fromValue(data['ownerAccountType']),
+      isOwnerVerified: data['isOwnerVerified'] as bool? ?? false,
     );
   }
 
@@ -91,6 +100,8 @@ class Listing {
       'createdAt': Timestamp.fromDate(createdAt),
       'imageAsset': imageAsset,
       'contactInfo': contactInfo,
+      'ownerAccountType': ownerAccountType.value,
+      'isOwnerVerified': isOwnerVerified,
       if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
     };
   }
@@ -137,6 +148,8 @@ final sampleListings = [
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/glass_jars.svg',
     contactInfo: '0555 222 33 44',
+    ownerAccountType: AccountType.organization,
+    isOwnerVerified: true,
   ),
   Listing(
     id: 'listing-electronic-parts',

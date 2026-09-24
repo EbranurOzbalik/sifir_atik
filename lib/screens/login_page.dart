@@ -17,6 +17,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
+  final _contactPersonController = TextEditingController();
+  final _cityController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -29,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
   bool _isLoading = false;
   AccountType _accountType = AccountType.individual;
+  OrganizationType _organizationType = OrganizationType.company;
 
   @override
   void initState() {
@@ -68,6 +71,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     _displayNameController.dispose();
+    _contactPersonController.dispose();
+    _cityController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -114,6 +119,25 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  String? _validateContactPerson(String? value) {
+    if (!_isRegisterMode || _accountType != AccountType.organization) {
+      return null;
+    }
+
+    if ((value?.trim().length ?? 0) < 2) {
+      return 'Yetkili kişinin adını ve soyadını yazın.';
+    }
+    return null;
+  }
+
+  String? _validateCity(String? value) {
+    if (!_isRegisterMode) return null;
+    if ((value?.trim().length ?? 0) < 2) {
+      return 'Şehir bilgisini yazın.';
+    }
+    return null;
+  }
+
   String? _validateConfirmPassword(String? value) {
     if (!_isRegisterMode) return null;
 
@@ -144,6 +168,11 @@ class _LoginPageState extends State<LoginPage> {
           password: _passwordController.text,
           displayName: _displayNameController.text.trim(),
           accountType: _accountType,
+          city: _cityController.text.trim(),
+          contactPersonName: _contactPersonController.text.trim(),
+          organizationType: _accountType == AccountType.organization
+              ? _organizationType
+              : null,
         );
         await _sessionPreferences.setRememberMe(_rememberMe);
 
@@ -177,11 +206,12 @@ class _LoginPageState extends State<LoginPage> {
     if (_isLoading) return;
 
     if (_isRegisterMode) {
-      final displayNameError = _validateDisplayName(
-        _displayNameController.text,
-      );
-      if (displayNameError != null) {
-        _showMessage(displayNameError);
+      final profileError =
+          _validateDisplayName(_displayNameController.text) ??
+          _validateContactPerson(_contactPersonController.text) ??
+          _validateCity(_cityController.text);
+      if (profileError != null) {
+        _showMessage(profileError);
         return;
       }
     }
@@ -194,6 +224,11 @@ class _LoginPageState extends State<LoginPage> {
             ? _displayNameController.text.trim()
             : null,
         accountType: _accountType,
+        city: _cityController.text.trim(),
+        contactPersonName: _contactPersonController.text.trim(),
+        organizationType: _accountType == AccountType.organization
+            ? _organizationType
+            : null,
       );
       await _sessionPreferences.setRememberMe(_rememberMe);
 
@@ -248,7 +283,10 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _isRegisterMode = !_isRegisterMode;
       _accountType = AccountType.individual;
+      _organizationType = OrganizationType.company;
       _displayNameController.clear();
+      _contactPersonController.clear();
+      _cityController.clear();
       _confirmPasswordController.clear();
     });
   }
@@ -308,7 +346,12 @@ class _LoginPageState extends State<LoginPage> {
                               selected: {_accountType},
                               showSelectedIcon: false,
                               onSelectionChanged: (selection) {
-                                setState(() => _accountType = selection.first);
+                                setState(() {
+                                  _accountType = selection.first;
+                                  if (_accountType == AccountType.individual) {
+                                    _contactPersonController.clear();
+                                  }
+                                });
                               },
                             ),
                           ),
@@ -329,6 +372,51 @@ class _LoginPageState extends State<LoginPage> {
                                     : Icons.person_outline,
                               ),
                               border: const OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          if (_accountType == AccountType.organization) ...[
+                            DropdownButtonFormField<OrganizationType>(
+                              initialValue: _organizationType,
+                              decoration: const InputDecoration(
+                                labelText: 'Kurum türü',
+                                prefixIcon: Icon(Icons.domain_outlined),
+                              ),
+                              items: OrganizationType.values
+                                  .map(
+                                    (type) => DropdownMenuItem(
+                                      value: type,
+                                      child: Text(type.label),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => _organizationType = value);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 18),
+                            TextFormField(
+                              controller: _contactPersonController,
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.words,
+                              validator: _validateContactPerson,
+                              decoration: const InputDecoration(
+                                labelText: 'Yetkili kişi',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                          ],
+                          TextFormField(
+                            controller: _cityController,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            validator: _validateCity,
+                            decoration: const InputDecoration(
+                              labelText: 'Şehir',
+                              prefixIcon: Icon(Icons.location_city_outlined),
                             ),
                           ),
                           const SizedBox(height: 18),

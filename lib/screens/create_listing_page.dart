@@ -7,14 +7,21 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sifir_atik/data/turkey_locations.dart';
 import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
+import 'package:sifir_atik/services/user_profile_repository.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 class CreateListingPage extends StatefulWidget {
-  const CreateListingPage({super.key, this.listing});
+  const CreateListingPage({
+    super.key,
+    this.listing,
+    this.profileRepository = const UserProfileRepository(),
+  });
 
   final Listing? listing;
+  final UserProfileRepository profileRepository;
 
   @override
   State<CreateListingPage> createState() => _CreateListingPageState();
@@ -424,10 +431,24 @@ class _CreateListingPageState extends State<CreateListingPage> {
     );
   }
 
-  String _ownerNameFor(User? user) {
+  String _ownerNameFor(User? user, UserProfile? profile) {
+    final profileName = profile?.displayName.trim();
+    if (profileName?.isNotEmpty == true) return profileName!;
+
     final displayName = user?.displayName?.trim();
 
     return displayName?.isNotEmpty == true ? displayName! : 'Kullanıcı';
+  }
+
+  Future<UserProfile?> _profileFor(User? user) async {
+    if (user == null) return null;
+
+    try {
+      return await widget.profileRepository.getProfile(user.uid);
+    } catch (error) {
+      debugPrint('Profil bilgisi okunamadı: $error');
+      return null;
+    }
   }
 
   Future<void> _submitDraft() async {
@@ -450,6 +471,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
     final oldListing = widget.listing;
     final listingId = oldListing?.id ?? 'listing-${now.millisecondsSinceEpoch}';
     final ownerId = oldListing?.ownerId ?? user?.uid ?? 'local-user';
+    final ownerProfile = oldListing == null ? await _profileFor(user) : null;
     String? imageUrl;
     var photoUploadFailed = false;
     var oldPhotoCleanupFailed = false;
@@ -476,11 +498,16 @@ class _CreateListingPageState extends State<CreateListingPage> {
             amount: _amountController.text.trim(),
             description: _descriptionController.text.trim(),
             ownerId: ownerId,
-            ownerName: _ownerNameFor(user),
+            ownerName: _ownerNameFor(user, ownerProfile),
             createdAt: now,
             imageAsset: listingImageForCategory(_selectedCategory!),
             contactInfo: _contactController.text.trim(),
             imageUrl: imageUrl,
+            ownerAccountType:
+                ownerProfile?.accountType ?? AccountType.individual,
+            isOwnerVerified:
+                ownerProfile?.accountType == AccountType.organization &&
+                ownerProfile?.isOrganizationVerified == true,
           )
         : oldListing.copyWith(
             title: _titleController.text.trim(),

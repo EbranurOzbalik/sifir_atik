@@ -32,6 +32,9 @@ void main() {
         displayName: 'Yeşil Dönüşüm A.Ş.',
         email: 'iletisim@example.com',
         accountType: AccountType.organization,
+        city: 'Trabzon',
+        contactPersonName: 'Ebranur Özbalık',
+        organizationType: OrganizationType.company,
       );
       await repository.createProfileIfMissing(
         uid: 'organization-1',
@@ -44,6 +47,35 @@ void main() {
 
       expect(profile!.displayName, 'Yeşil Dönüşüm A.Ş.');
       expect(profile.accountType, AccountType.organization);
+      expect(profile.city, 'Trabzon');
+      expect(profile.contactPersonName, 'Ebranur Özbalık');
+      expect(profile.organizationType, OrganizationType.company);
+      expect(profile.isOrganizationVerified, isFalse);
     });
+
+    test(
+      'eski kullanıcı belgesindeki eksik profil alanlarını tamamlar',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        await firestore.collection('users').doc('legacy-user').set({
+          'role': 'moderator',
+        });
+        final repository = UserProfileRepository(firestore: firestore);
+
+        await repository.createProfileIfMissing(
+          uid: 'legacy-user',
+          displayName: 'Eski Kullanıcı',
+          email: 'eski@example.com',
+          accountType: AccountType.individual,
+        );
+
+        final data =
+            (await firestore.collection('users').doc('legacy-user').get())
+                .data()!;
+        expect(data['role'], 'moderator');
+        expect(data['accountType'], 'individual');
+        expect(data['isOrganizationVerified'], isFalse);
+      },
+    );
   });
 }

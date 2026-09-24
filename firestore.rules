@@ -16,23 +16,68 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.accountType in ['individual', 'organization']
+        && request.resource.data.isOrganizationVerified == false
         && request.resource.data.role == 'user'
         && !request.resource.data.keys().hasAny(['isModerator']);
-      allow update: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.diff(resource.data).changedKeys()
-          .hasOnly(['displayName', 'accountType', 'updatedAt'])
-        && request.resource.data.accountType in ['individual', 'organization']
-        && request.resource.data.role == resource.data.role;
+      allow update: if (
+          request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly([
+              'displayName',
+              'email',
+              'city',
+              'contactPersonName',
+              'organizationType',
+              'accountType',
+              'isOrganizationVerified',
+              'updatedAt'
+            ])
+          && (
+            request.resource.data.accountType == resource.data.get('accountType', '')
+            || (
+              !resource.data.keys().hasAny(['accountType'])
+              && request.resource.data.accountType in ['individual', 'organization']
+            )
+          )
+          && (
+            request.resource.data.isOrganizationVerified ==
+              resource.data.get('isOrganizationVerified', false)
+            || (
+              !resource.data.keys().hasAny(['isOrganizationVerified'])
+              && request.resource.data.isOrganizationVerified == false
+            )
+          )
+          && (
+            request.resource.data.email == resource.data.get('email', '')
+            || !resource.data.keys().hasAny(['email'])
+          )
+          && request.resource.data.get('role', '') == resource.data.get('role', '')
+        ) || (
+          isModerator()
+          && resource.data.accountType == 'organization'
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(['isOrganizationVerified', 'updatedAt'])
+        );
     }
 
     match /listings/{listingId} {
       allow read: if true;
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.ownerId;
+        && request.auth.uid == request.resource.data.ownerId
+        && request.resource.data.ownerAccountType in ['individual', 'organization']
+        && request.resource.data.ownerAccountType ==
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType
+        && (
+          request.resource.data.isOwnerVerified == false
+          || get(/databases/$(database)/documents/users/$(request.auth.uid))
+            .data.isOrganizationVerified == true
+        );
       allow update: if request.auth != null
         && request.auth.uid == resource.data.ownerId
-        && request.resource.data.ownerId == resource.data.ownerId;
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.ownerAccountType == resource.data.ownerAccountType
+        && request.resource.data.isOwnerVerified == resource.data.isOwnerVerified;
       allow delete: if request.auth != null
         && (request.auth.uid == resource.data.ownerId || isModerator());
     }

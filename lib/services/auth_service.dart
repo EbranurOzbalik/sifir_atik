@@ -36,7 +36,21 @@ class AuthService {
     _checkFirebase();
 
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = credential.user;
+      if (user != null) {
+        await _profileRepository.createProfileIfMissing(
+          uid: user.uid,
+          displayName: user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : 'Kullanıcı',
+          email: user.email ?? email,
+          accountType: AccountType.individual,
+        );
+      }
     } on FirebaseAuthException catch (error) {
       throw AuthServiceException(_messageForCode(error.code));
     }
@@ -47,6 +61,9 @@ class AuthService {
     required String password,
     required String displayName,
     required AccountType accountType,
+    String city = '',
+    String contactPersonName = '',
+    OrganizationType? organizationType,
   }) async {
     _checkFirebase();
 
@@ -66,6 +83,9 @@ class AuthService {
         displayName: displayName,
         email: user.email ?? email,
         accountType: accountType,
+        city: city,
+        contactPersonName: contactPersonName,
+        organizationType: organizationType,
       );
     } on FirebaseAuthException catch (error) {
       throw AuthServiceException(_messageForCode(error.code));
@@ -108,6 +128,9 @@ class AuthService {
   Future<void> signInWithGoogle({
     String? displayName,
     AccountType accountType = AccountType.individual,
+    String city = '',
+    String contactPersonName = '',
+    OrganizationType? organizationType,
   }) async {
     _checkFirebase();
 
@@ -139,6 +162,9 @@ class AuthService {
           displayName: resolvedName,
           email: user.email ?? '',
           accountType: accountType,
+          city: city,
+          contactPersonName: contactPersonName,
+          organizationType: organizationType,
         );
       }
     } on FirebaseAuthException catch (error) {

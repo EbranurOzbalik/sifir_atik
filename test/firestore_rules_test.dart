@@ -42,6 +42,21 @@ void main() {
         contains("!request.resource.data.keys().hasAny(['isModerator'])"),
       );
       expect(rules, contains("accountType in ['individual', 'organization']"));
+      expect(
+        rules,
+        contains('request.resource.data.isOrganizationVerified == false'),
+      );
+      expect(
+        rules,
+        contains(
+          "request.resource.data.accountType == resource.data.get('accountType', '')",
+        ),
+      );
+    });
+
+    test('kurumsal ilan rozeti kullanıcı profiliyle eşleşmelidir', () {
+      expect(rules, contains('request.resource.data.ownerAccountType =='));
+      expect(rules, contains('data.isOrganizationVerified == true'));
     });
 
     test('ilan bildirimleri yalnızca giriş yapan kullanıcıyla oluşturulur', () {

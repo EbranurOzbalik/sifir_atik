@@ -145,6 +145,11 @@ class ProfilePage extends StatelessWidget {
                           : email,
                       accountType:
                           profile?.accountType ?? AccountType.individual,
+                      city: profile?.city ?? '',
+                      contactPersonName: profile?.contactPersonName ?? '',
+                      organizationType: profile?.organizationType,
+                      isOrganizationVerified:
+                          profile?.isOrganizationVerified ?? false,
                       isModerator: isModerator,
                     );
                   },
@@ -255,12 +260,20 @@ class _ProfileHeader extends StatelessWidget {
     required this.displayName,
     required this.email,
     required this.accountType,
+    required this.city,
+    required this.contactPersonName,
+    required this.organizationType,
+    required this.isOrganizationVerified,
     required this.isModerator,
   });
 
   final String displayName;
   final String email;
   final AccountType accountType;
+  final String city;
+  final String contactPersonName;
+  final OrganizationType? organizationType;
+  final bool isOrganizationVerified;
   final bool isModerator;
 
   @override
@@ -279,7 +292,9 @@ class _ProfileHeader extends StatelessWidget {
             radius: 30,
             backgroundColor: colorScheme.primaryContainer,
             child: Icon(
-              Icons.person_outline_rounded,
+              accountType == AccountType.organization
+                  ? Icons.apartment_rounded
+                  : Icons.person_outline_rounded,
               size: 30,
               color: colorScheme.primary,
             ),
@@ -304,6 +319,40 @@ class _ProfileHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
+                if (accountType == AccountType.organization &&
+                    contactPersonName.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    'Yetkili: $contactPersonName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (city.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          city,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -315,6 +364,21 @@ class _ProfileHeader extends StatelessWidget {
                           : Icons.person_outline,
                       label: accountType.profileLabel,
                     ),
+                    if (accountType == AccountType.organization &&
+                        organizationType != null)
+                      _ProfileBadge(
+                        icon: Icons.domain_outlined,
+                        label: organizationType!.label,
+                      ),
+                    if (accountType == AccountType.organization)
+                      _ProfileBadge(
+                        icon: isOrganizationVerified
+                            ? Icons.verified_rounded
+                            : Icons.schedule_rounded,
+                        label: isOrganizationVerified
+                            ? 'Doğrulanmış kurum'
+                            : 'Doğrulama bekliyor',
+                      ),
                     if (isModerator)
                       const _ProfileBadge(
                         icon: Icons.verified_user_outlined,
