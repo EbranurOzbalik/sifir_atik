@@ -59,6 +59,13 @@ void main() {
       expect(rules, contains('data.isOrganizationVerified == true'));
     });
 
+    test('bildirim ve cihaz kayıtları kullanıcıya özel tutulur', () {
+      expect(rules, contains('match /devices/{deviceId}'));
+      expect(rules, contains('match /notifications/{notificationId}'));
+      expect(rules, contains(".hasOnly(['isRead'])"));
+      expect(rules, contains('allow create: if false'));
+    });
+
     test('ilan bildirimleri yalnızca giriş yapan kullanıcıyla oluşturulur', () {
       expect(rules, contains('match /listingReports/{reportId}'));
       expect(

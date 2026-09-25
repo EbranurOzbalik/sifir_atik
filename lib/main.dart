@@ -2,9 +2,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 import 'screens/auth_gate.dart';
+import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -26,6 +28,8 @@ Future<void> main() async {
   }
 
   if (Firebase.apps.isNotEmpty) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     try {
       await FirebaseAppCheck.instance.activate(
         providerAndroid: kDebugMode

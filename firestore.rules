@@ -59,6 +59,24 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).changedKeys()
             .hasOnly(['isOrganizationVerified', 'updatedAt'])
         );
+
+      match /devices/{deviceId} {
+        allow read, create, update, delete: if request.auth != null
+          && request.auth.uid == userId;
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null
+          && request.auth.uid == userId;
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(['isRead'])
+          && request.resource.data.isRead == true;
+        allow delete: if request.auth != null
+          && request.auth.uid == userId;
+        allow create: if false;
+      }
     }
 
     match /listings/{listingId} {

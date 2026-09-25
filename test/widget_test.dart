@@ -218,9 +218,10 @@ void main() {
     await tester.tap(find.byTooltip('Profilim'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Çıkış Yap'), findsOneWidget);
+    expect(find.text('Bildirimler'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -350));
     await tester.pump();
+    expect(find.text('Çıkış Yap'), findsOneWidget);
     expect(find.text('Hesabımı Sil'), findsOneWidget);
   });
 

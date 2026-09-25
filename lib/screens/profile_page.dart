@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/notification_service.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
 import 'package:sifir_atik/services/user_profile_repository.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -12,6 +13,7 @@ import 'login_page.dart';
 import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
+import 'notifications_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({
@@ -32,6 +34,10 @@ class ProfilePage extends StatelessWidget {
     await const SessionPreferences().clearRememberMe();
 
     if (Firebase.apps.isNotEmpty) {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await NotificationService.instance.unregister(userId);
+      }
       await FirebaseAuth.instance.signOut();
     }
 
@@ -75,6 +81,10 @@ class ProfilePage extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await NotificationService.instance.unregister(userId);
+      }
       await AuthService().deleteCurrentAccount();
       await const SessionPreferences().clearRememberMe();
 
@@ -85,6 +95,10 @@ class ProfilePage extends StatelessWidget {
         (_) => false,
       );
     } on AuthServiceException catch (error) {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await NotificationService.instance.initialize(userId);
+      }
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context)
@@ -167,6 +181,21 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              ResponsiveContent(
+                child: _ProfileTile(
+                  icon: Icons.notifications_none_rounded,
+                  title: 'Bildirimler',
+                  description: 'Talep ve ilan bildirimlerini gör.',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
               ResponsiveContent(
                 child: _ProfileTile(
                   icon: Icons.inventory_2_outlined,

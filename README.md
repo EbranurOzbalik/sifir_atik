@@ -54,6 +54,10 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Talep durumunu beklemede, kabul edildi veya reddedildi olarak gösterme
 - Kabul edilen talepte telefon bilgisini açma
 - Arama ve WhatsApp üzerinden iletişim kurma
+- Yeni talep geldiğinde ilan sahibine bildirim oluşturma
+- Talep kabul veya reddedildiğinde talep gönderene bildirim oluşturma
+- Okunmamış bildirim sayısını ana ekranda gösterme
+- Uygulama içindeki bildirim merkezinden taleplere geçme
 
 ### Bildirme ve moderasyon akışı
 
@@ -70,6 +74,8 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Firebase Storage ile ilan fotoğraflarını saklama
 - Firestore güvenlik kurallarıyla ilan, talep ve moderatör izinlerini kontrol etme
 - Storage kurallarıyla fotoğraf yükleme ve silme izinlerini sınırlandırma
+- Firebase Cloud Messaging ile cihazlara push bildirim gönderme
+- Cloud Functions ile talep olaylarından otomatik bildirim üretme
 
 ## Ekran Görüntüleri
 
@@ -133,6 +139,16 @@ cd ..
 flutter run
 ```
 
+Bildirimlerin sunucu tarafını etkinleştirmek için Firestore kuralları ve Cloud
+Functions ayrıca yayınlanmalıdır:
+
+```bash
+firebase deploy --only firestore:rules,functions --project sifir-atik-46bd0
+```
+
+iOS cihazlarda push bildirimi alabilmek için Apple Developer hesabından alınan
+APNs anahtarı Firebase Console'daki Cloud Messaging bölümüne yüklenmelidir.
+
 Kod analizi ve testler için:
 
 ```bash
@@ -158,9 +174,10 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Firestore kurallarında ilan sahibi ve moderatör kontrolü
 - Hesap türü ve kurumsal doğrulama bilgilerinin güvenlik kontrolü
 - Bireysel ve kurumsal ilan filtreleri
+- Bildirim merkezi, okunmamış sayacı ve bildirim okuma işlemleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 45 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 49 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış

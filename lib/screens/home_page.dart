@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/notification_service.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
 import 'package:sifir_atik/widgets/listing_preview_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -13,6 +16,7 @@ import 'listings_page.dart';
 import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
+import 'notifications_page.dart';
 import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,11 +30,38 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  StreamSubscription<void>? _notificationTapSubscription;
 
   User? get _user =>
       Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
 
   String? get _currentUserName => _user?.displayName ?? _user?.email;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationTapSubscription = NotificationService.instance.notificationTaps
+        .listen((_) => _openNotifications());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = _user?.uid;
+      if (userId != null) {
+        NotificationService.instance.initialize(userId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationTapSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _openNotifications() {
+    if (!mounted) return;
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const NotificationsPage()));
+  }
 
   void _selectPage(int index) {
     if (index == 2) {
@@ -58,6 +89,7 @@ class _HomePageState extends State<HomePage> {
         currentUserName: _currentUserName,
         onExplore: () => _selectPage(1),
         onProfile: () => _selectPage(4),
+        onNotifications: _openNotifications,
         onMyListings: _openMyListings,
       ),
       ListingsPage(repository: widget.repository, embedded: true),
@@ -83,6 +115,7 @@ class _HomeFeed extends StatelessWidget {
     required this.currentUserName,
     required this.onExplore,
     required this.onProfile,
+    required this.onNotifications,
     required this.onMyListings,
   });
 
@@ -91,6 +124,7 @@ class _HomeFeed extends StatelessWidget {
   final String? currentUserName;
   final VoidCallback onExplore;
   final VoidCallback onProfile;
+  final VoidCallback onNotifications;
   final VoidCallback onMyListings;
 
   void _openDetail(BuildContext context, Listing listing) {
@@ -134,7 +168,9 @@ class _HomeFeed extends StatelessWidget {
                     maxWidth: 980,
                     child: _HomeHero(
                       currentUserName: currentUserName,
+                      currentUserId: currentUserId,
                       onProfile: onProfile,
+                      onNotifications: onNotifications,
                       onExplore: onExplore,
                     ),
                   ),
@@ -271,12 +307,16 @@ class _HomeFeed extends StatelessWidget {
 class _HomeHero extends StatelessWidget {
   const _HomeHero({
     required this.currentUserName,
+    required this.currentUserId,
     required this.onProfile,
+    required this.onNotifications,
     required this.onExplore,
   });
 
   final String? currentUserName;
+  final String? currentUserId;
   final VoidCallback onProfile;
+  final VoidCallback onNotifications;
   final VoidCallback onExplore;
 
   @override
@@ -316,6 +356,8 @@ class _HomeHero extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
+            NotificationBell(userId: currentUserId, onPressed: onNotifications),
+            const SizedBox(width: 8),
             IconButton(
               tooltip: 'Profilim',
               onPressed: onProfile,
