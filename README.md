@@ -38,7 +38,10 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - İlanlara fotoğraf ekleme
 - Fotoğrafı güncelleme veya kaldırma
 - Şehir ve ilçeyi arayarak seçme
+- İlanlara tam adresi göstermeden yaklaşık konum ekleme
 - İlanları listeleme ve detayını görme
+- Konum izniyle 25 km içindeki ilanları mesafeye göre sıralama
+- Yakındaki ilanların uzaklığını metre veya kilometre olarak gösterme
 - Kategoriye göre filtreleme
 - İlanları bireysel veya kurumsal hesap türüne göre filtreleme
 - Kurumsal ve doğrulanmış kurum ilanlarını rozetle ayırt etme
@@ -118,6 +121,7 @@ Android emülatörde aldım.
 - Image Picker
 - URL Launcher
 - Shared Preferences
+- Geolocator
 
 ## Projeyi Çalıştırma
 
@@ -167,6 +171,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - İlan oluşturma formu
 - Fotoğraf kaldırma işlemi
 - Arama ve kategori filtreleri
+- Yakındaki ilanları mesafeye göre filtreleme ve sıralama
 - Kullanıcının kendi ilanına talep gönderememesi
 - Talep başarısız olduğunda yanlış başarı mesajı gösterilmemesi
 - Talep durumlarının ekranda doğru görünmesi
@@ -177,7 +182,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Bildirim merkezi, okunmamış sayacı ve bildirim okuma işlemleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 49 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 51 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış
@@ -199,8 +204,8 @@ Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak dened
 Proje Android emülatörde demo yapılabilecek, iOS 15 ve üzeri simülatörlerde de
 derlenip açılabilecek seviyededir. Kullanıcı giriş yapabiliyor, ilan
 oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor, kendi ilanlarını
-yönetebiliyor, başka ilanlara talep gönderebiliyor ve uygunsuz ilanlar moderatör
-tarafından incelenebiliyor.
+yönetebiliyor, yakındaki ilanları mesafeye göre görebiliyor, başka ilanlara talep
+gönderebiliyor ve uygunsuz ilanlar moderatör tarafından incelenebiliyor.
 
 Google Play ve App Store dağıtımı öncesinde mağaza imzaları, gizlilik metinleri
 ve gerçek cihaz kontrolleri ayrıca tamamlanmalıdır.
