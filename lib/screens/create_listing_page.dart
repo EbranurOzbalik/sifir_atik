@@ -9,6 +9,7 @@ import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/location_service.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
 import 'package:sifir_atik/services/user_profile_repository.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -18,10 +19,12 @@ class CreateListingPage extends StatefulWidget {
     super.key,
     this.listing,
     this.profileRepository = const UserProfileRepository(),
+    this.locationClient = const DeviceLocationService(),
   });
 
   final Listing? listing;
   final UserProfileRepository profileRepository;
+  final LocationClient locationClient;
 
   @override
   State<CreateListingPage> createState() => _CreateListingPageState();
@@ -52,7 +55,10 @@ class _CreateListingPageState extends State<CreateListingPage> {
   bool _isSaving = false;
   bool _isSendingCode = false;
   bool _isVerifyingCode = false;
+  bool _isGettingLocation = false;
   String? _phoneAuthMessage;
+  double? _listingLatitude;
+  double? _listingLongitude;
 
   bool get _isEditing => widget.listing != null;
   bool get _isPhoneVerified =>
@@ -73,6 +79,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
       _contactController.text = listing.contactInfo;
       _selectedCategory = listing.category;
       _verifiedPhone = _normalizedPhone(listing.contactInfo);
+      _listingLatitude = listing.latitude;
+      _listingLongitude = listing.longitude;
     }
   }
 
@@ -169,6 +177,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
     final district = _districtController.text.trim();
 
     _locationController.text = district.isEmpty ? city : '$district, $city';
+    _listingLatitude = null;
+    _listingLongitude = null;
   }
 
   void _onContactChanged(String value) {
@@ -191,6 +201,35 @@ class _CreateListingPageState extends State<CreateListingPage> {
       ..showSnackBar(
         SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
+  }
+
+  Future<void> _captureListingLocation() async {
+    if (_isGettingLocation) return;
+
+    setState(() => _isGettingLocation = true);
+    try {
+      final location = (await widget.locationClient.getCurrentLocation())
+          .rounded();
+      if (!mounted) return;
+      setState(() {
+        _listingLatitude = location.latitude;
+        _listingLongitude = location.longitude;
+      });
+      _showMessage('Yaklaşık konum ilana eklendi.');
+    } on LocationServiceException catch (error) {
+      _showMessage(error.message);
+    } catch (_) {
+      _showMessage('Konum alınamadı. Biraz sonra tekrar deneyin.');
+    } finally {
+      if (mounted) setState(() => _isGettingLocation = false);
+    }
+  }
+
+  void _removeListingLocation() {
+    setState(() {
+      _listingLatitude = null;
+      _listingLongitude = null;
+    });
   }
 
   Future<void> _sendSmsCode() async {
@@ -508,6 +547,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
             isOwnerVerified:
                 ownerProfile?.accountType == AccountType.organization &&
                 ownerProfile?.isOrganizationVerified == true,
+            latitude: _listingLatitude,
+            longitude: _listingLongitude,
           )
         : oldListing.copyWith(
             title: _titleController.text.trim(),
@@ -519,6 +560,10 @@ class _CreateListingPageState extends State<CreateListingPage> {
             contactInfo: _contactController.text.trim(),
             imageUrl: imageUrl,
             clearImageUrl: _removeExistingPhoto,
+            latitude: _listingLatitude,
+            longitude: _listingLongitude,
+            clearCoordinates:
+                _listingLatitude == null || _listingLongitude == null,
           );
 
     final isSaved = _isEditing
@@ -758,6 +803,93 @@ class _CreateListingPageState extends State<CreateListingPage> {
                         ],
                       );
                     },
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.8,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _listingLatitude == null
+                                ? Icons.near_me_outlined
+                                : Icons.near_me_rounded,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _listingLatitude == null
+                                    ? 'Yakındaki ilanlarda görün'
+                                    : 'Yaklaşık konum eklendi',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _listingLatitude == null
+                                    ? 'İlanın mesafeye göre bulunabilmesi için cihaz konumunu ekleyin.'
+                                    : 'Tam adresiniz gösterilmez; konum yalnızca mesafe hesabında kullanılır.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.35,
+                                    ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: _isGettingLocation
+                                        ? null
+                                        : _captureListingLocation,
+                                    icon: _isGettingLocation
+                                        ? const SizedBox.square(
+                                            dimension: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.my_location_rounded),
+                                    label: Text(
+                                      _listingLatitude == null
+                                          ? 'Konumumu ekle'
+                                          : 'Konumu güncelle',
+                                    ),
+                                  ),
+                                  if (_listingLatitude != null)
+                                    TextButton(
+                                      onPressed: _removeListingLocation,
+                                      child: const Text('Konumu kaldır'),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 18),
                   TextFormField(

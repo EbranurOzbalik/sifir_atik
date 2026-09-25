@@ -10,6 +10,19 @@ service cloud.firestore {
         );
     }
 
+    function hasValidListingCoordinates() {
+      return (
+          !request.resource.data.keys().hasAny(['latitude', 'longitude'])
+        ) || (
+          request.resource.data.latitude is number
+          && request.resource.data.longitude is number
+          && request.resource.data.latitude >= -90
+          && request.resource.data.latitude <= 90
+          && request.resource.data.longitude >= -180
+          && request.resource.data.longitude <= 180
+        );
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null
         && request.auth.uid == userId;
@@ -86,6 +99,7 @@ service cloud.firestore {
         && request.resource.data.ownerAccountType in ['individual', 'organization']
         && request.resource.data.ownerAccountType ==
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType
+        && hasValidListingCoordinates()
         && (
           request.resource.data.isOwnerVerified == false
           || get(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -95,7 +109,8 @@ service cloud.firestore {
         && request.auth.uid == resource.data.ownerId
         && request.resource.data.ownerId == resource.data.ownerId
         && request.resource.data.ownerAccountType == resource.data.ownerAccountType
-        && request.resource.data.isOwnerVerified == resource.data.isOwnerVerified;
+        && request.resource.data.isOwnerVerified == resource.data.isOwnerVerified
+        && hasValidListingCoordinates();
       allow delete: if request.auth != null
         && (request.auth.uid == resource.data.ownerId || isModerator());
     }

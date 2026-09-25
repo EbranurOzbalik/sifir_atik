@@ -34,6 +34,8 @@
 	<string>İlanınıza fotoğraf ekleyebilmeniz için kamera erişimi gerekir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>İlanınıza fotoğraf seçebilmeniz için fotoğraf arşivi erişimi gerekir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Yakındaki ilanları göstermek ve ilanınıza yaklaşık konum eklemek için konum erişimi gerekir.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

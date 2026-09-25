@@ -59,6 +59,14 @@ void main() {
       expect(rules, contains('data.isOrganizationVerified == true'));
     });
 
+    test('ilan koordinatları geçerli aralıkta olmalıdır', () {
+      expect(rules, contains('function hasValidListingCoordinates()'));
+      expect(rules, contains('request.resource.data.latitude >= -90'));
+      expect(rules, contains('request.resource.data.latitude <= 90'));
+      expect(rules, contains('request.resource.data.longitude >= -180'));
+      expect(rules, contains('request.resource.data.longitude <= 180'));
+    });
+
     test('bildirim ve cihaz kayıtları kullanıcıya özel tutulur', () {
       expect(rules, contains('match /devices/{deviceId}'));
       expect(rules, contains('match /notifications/{notificationId}'));

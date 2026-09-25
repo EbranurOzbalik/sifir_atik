@@ -17,6 +17,8 @@ class Listing {
     this.imageUrl,
     this.ownerAccountType = AccountType.individual,
     this.isOwnerVerified = false,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -33,6 +35,10 @@ class Listing {
   final String? imageUrl;
   final AccountType ownerAccountType;
   final bool isOwnerVerified;
+  final double? latitude;
+  final double? longitude;
+
+  bool get hasCoordinates => latitude != null && longitude != null;
 
   Listing copyWith({
     String? title,
@@ -44,6 +50,9 @@ class Listing {
     String? contactInfo,
     String? imageUrl,
     bool clearImageUrl = false,
+    double? latitude,
+    double? longitude,
+    bool clearCoordinates = false,
   }) {
     return Listing(
       id: id,
@@ -60,6 +69,8 @@ class Listing {
       imageUrl: clearImageUrl ? null : imageUrl ?? this.imageUrl,
       ownerAccountType: ownerAccountType,
       isOwnerVerified: isOwnerVerified,
+      latitude: clearCoordinates ? null : latitude ?? this.latitude,
+      longitude: clearCoordinates ? null : longitude ?? this.longitude,
     );
   }
 
@@ -85,6 +96,8 @@ class Listing {
       imageUrl: data['imageUrl'] as String?,
       ownerAccountType: AccountTypeText.fromValue(data['ownerAccountType']),
       isOwnerVerified: data['isOwnerVerified'] as bool? ?? false,
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -103,6 +116,8 @@ class Listing {
       'ownerAccountType': ownerAccountType.value,
       'isOwnerVerified': isOwnerVerified,
       if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 }
@@ -134,6 +149,8 @@ final sampleListings = [
     createdAt: DateTime(2026, 9, 1),
     imageAsset: 'assets/images/cardboard_boxes.svg',
     contactInfo: '0555 111 22 33',
+    latitude: 40.991,
+    longitude: 29.028,
   ),
   Listing(
     id: 'listing-glass-jars',
@@ -150,6 +167,8 @@ final sampleListings = [
     contactInfo: '0555 222 33 44',
     ownerAccountType: AccountType.organization,
     isOwnerVerified: true,
+    latitude: 41.025,
+    longitude: 29.015,
   ),
   Listing(
     id: 'listing-electronic-parts',
@@ -164,5 +183,7 @@ final sampleListings = [
     createdAt: DateTime(2026, 9, 2),
     imageAsset: 'assets/images/electronics_parts.svg',
     contactInfo: '0555 333 44 55',
+    latitude: 40.984,
+    longitude: 29.127,
   ),
 ];

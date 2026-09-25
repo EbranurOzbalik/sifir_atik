@@ -201,6 +201,8 @@ class ListingRepository {
         'description': listing.description,
         'imageAsset': listing.imageAsset,
         'contactInfo': listing.contactInfo,
+        'latitude': listing.latitude ?? FieldValue.delete(),
+        'longitude': listing.longitude ?? FieldValue.delete(),
         'imageUrl': listing.imageUrl?.isNotEmpty == true
             ? listing.imageUrl
             : FieldValue.delete(),
