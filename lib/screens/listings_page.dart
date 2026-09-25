@@ -7,6 +7,7 @@ import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/location_service.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
 import 'package:sifir_atik/widgets/listing_preview_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
@@ -19,6 +20,7 @@ class ListingsPage extends StatefulWidget {
     this.currentUserName,
     this.isFirebaseReady,
     this.embedded = false,
+    this.locationClient = const DeviceLocationService(),
   });
 
   final ListingRepository repository;
@@ -26,18 +28,24 @@ class ListingsPage extends StatefulWidget {
   final String? currentUserName;
   final bool? isFirebaseReady;
   final bool embedded;
+  final LocationClient locationClient;
 
   @override
   State<ListingsPage> createState() => _ListingsPageState();
 }
 
 class _ListingsPageState extends State<ListingsPage> {
+  static const _nearbyRadiusKm = 25.0;
+
   final Map<String, ListingRequest> _requestsByListingId = {};
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'Tümü';
   AccountType? _selectedOwnerType;
   List<Listing> _listings = sampleListings;
+  AppLocation? _currentLocation;
+  bool _nearbyOnly = false;
+  bool _isLocating = false;
 
   bool get _hasFirebase => widget.isFirebaseReady ?? Firebase.apps.isNotEmpty;
 
@@ -55,7 +63,7 @@ class _ListingsPageState extends State<ListingsPage> {
   List<Listing> get _filteredListings {
     final query = _searchController.text.trim().toLowerCase();
 
-    return _listings.where((listing) {
+    final matchingListings = _listings.where((listing) {
       final matchesCategory =
           _selectedCategory == 'Tümü' || listing.category == _selectedCategory;
       final matchesQuery =
@@ -69,6 +77,58 @@ class _ListingsPageState extends State<ListingsPage> {
 
       return matchesCategory && matchesQuery && matchesOwnerType;
     }).toList();
+
+    if (!_nearbyOnly || _currentLocation == null) return matchingListings;
+
+    return matchingListings.where((listing) {
+      final distance = _distanceFor(listing);
+      return distance != null && distance <= _nearbyRadiusKm;
+    }).toList()..sort(
+      (first, second) => _distanceFor(first)!.compareTo(_distanceFor(second)!),
+    );
+  }
+
+  double? _distanceFor(Listing listing) {
+    final currentLocation = _currentLocation;
+    if (currentLocation == null || !listing.hasCoordinates) return null;
+
+    return distanceInKilometers(
+      currentLocation,
+      AppLocation(latitude: listing.latitude!, longitude: listing.longitude!),
+    );
+  }
+
+  Future<void> _toggleNearby() async {
+    if (_nearbyOnly) {
+      setState(() => _nearbyOnly = false);
+      return;
+    }
+    if (_isLocating) return;
+
+    setState(() => _isLocating = true);
+    try {
+      final location = await widget.locationClient.getCurrentLocation();
+      if (!mounted) return;
+      setState(() {
+        _currentLocation = location;
+        _nearbyOnly = true;
+      });
+    } on LocationServiceException catch (error) {
+      _showLocationMessage(error.message);
+    } catch (_) {
+      _showLocationMessage('Konum alınamadı. Biraz sonra tekrar deneyin.');
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  void _showLocationMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
   }
 
   @override
@@ -140,6 +200,32 @@ class _ListingsPageState extends State<ListingsPage> {
               ),
             ),
           ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            2,
+            horizontalPadding,
+            0,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: ResponsiveContent(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilterChip(
+                  selected: _nearbyOnly,
+                  avatar: _isLocating
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.near_me_outlined, size: 17),
+                  label: const Text('Yakınımdakiler'),
+                  onSelected: _isLocating ? null : (_) => _toggleNearby(),
+                ),
+              ),
+            ),
+          ),
+        ),
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
             horizontalPadding,
@@ -247,10 +333,42 @@ class _ListingsPageState extends State<ListingsPage> {
             ),
           ),
         ),
+        if (_nearbyOnly)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              12,
+              horizontalPadding,
+              0,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: ResponsiveContent(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.my_location_rounded,
+                      size: 17,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        '25 km içindeki ilanlar yakından uzağa sıralanıyor.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         if (filteredListings.isEmpty)
-          const SliverFillRemaining(
+          SliverFillRemaining(
             hasScrollBody: false,
-            child: _EmptyListingsMessage(),
+            child: _EmptyListingsMessage(isNearbyFilter: _nearbyOnly),
           )
         else
           SliverPadding(
@@ -267,6 +385,7 @@ class _ListingsPageState extends State<ListingsPage> {
                 return ListingPreviewCard(
                   listing: listing,
                   request: _requestsByListingId[listing.id],
+                  distanceKm: _nearbyOnly ? _distanceFor(listing) : null,
                   onTap: () => _openListingDetail(listing),
                 );
               }, childCount: filteredListings.length),
@@ -819,7 +938,9 @@ class _RequestStatusCard extends StatelessWidget {
 }
 
 class _EmptyListingsMessage extends StatelessWidget {
-  const _EmptyListingsMessage();
+  const _EmptyListingsMessage({this.isNearbyFilter = false});
+
+  final bool isNearbyFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -838,14 +959,18 @@ class _EmptyListingsMessage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Uygun ilan bulunamadı.',
+              isNearbyFilter
+                  ? 'Yakınınızda ilan bulunamadı.'
+                  : 'Uygun ilan bulunamadı.',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 5),
             Text(
-              'Arama veya kategori filtresini değiştirmeyi deneyin.',
+              isNearbyFilter
+                  ? '25 km içindeki ilanlarda konum bilgisi bulunmuyor olabilir.'
+                  : 'Arama veya kategori filtresini değiştirmeyi deneyin.',
               textAlign: TextAlign.center,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),

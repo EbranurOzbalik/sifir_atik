@@ -4,6 +4,7 @@ import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
+import 'package:sifir_atik/services/location_service.dart';
 
 class ListingPreviewCard extends StatelessWidget {
   const ListingPreviewCard({
@@ -11,10 +12,12 @@ class ListingPreviewCard extends StatelessWidget {
     required this.listing,
     required this.onTap,
     this.request,
+    this.distanceKm,
   });
 
   final Listing listing;
   final ListingRequest? request;
+  final double? distanceKm;
   final VoidCallback onTap;
 
   @override
@@ -72,6 +75,16 @@ class ListingPreviewCard extends StatelessWidget {
                         child: _Badge(
                           label: requestStatusLabel(request!.status),
                           color: requestStatusColor(request!.status),
+                        ),
+                      ),
+                    if (distanceKm != null)
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child: _Badge(
+                          label: formatDistance(distanceKm!),
+                          color: colorScheme.primary,
+                          icon: Icons.near_me_rounded,
                         ),
                       ),
                   ],

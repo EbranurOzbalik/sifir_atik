@@ -11,6 +11,7 @@ import 'package:sifir_atik/screens/listings_page.dart';
 import 'package:sifir_atik/screens/moderation_page.dart';
 import 'package:sifir_atik/screens/my_requests_page.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
+import 'package:sifir_atik/services/location_service.dart';
 import 'package:sifir_atik/services/moderation_ai_service.dart';
 
 void main() {
@@ -555,6 +556,52 @@ void main() {
     expect(find.text('Cam kavanoz ve şişeler'), findsOneWidget);
     expect(find.text('Temiz karton kutular'), findsNothing);
   });
+
+  testWidgets('nearby listings are filtered and sorted by distance', (
+    tester,
+  ) async {
+    final nearbyListing = _testListing(
+      ownerId: 'owner-near',
+    ).copyWith(title: 'Yakındaki kartonlar', latitude: 41.009, longitude: 29);
+    final farListing = _testListing(
+      ownerId: 'owner-far',
+    ).copyWith(title: 'Uzaktaki kartonlar', latitude: 42, longitude: 30);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingsPage(
+          repository: _FakeListingRepository(
+            listings: [farListing, nearbyListing],
+          ),
+          locationClient: const _FakeLocationClient(
+            AppLocation(latitude: 41, longitude: 29),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Yakınımdakiler'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Yakındaki kartonlar'), findsOneWidget);
+    expect(find.text('Uzaktaki kartonlar'), findsNothing);
+    expect(find.text('1,0 km'), findsOneWidget);
+    expect(
+      find.text('25 km içindeki ilanlar yakından uzağa sıralanıyor.'),
+      findsOneWidget,
+    );
+  });
+
+  test('distance calculation returns kilometers between two points', () {
+    const first = AppLocation(latitude: 41, longitude: 29);
+    const second = AppLocation(latitude: 41.009, longitude: 29);
+
+    final distance = distanceInKilometers(first, second);
+
+    expect(distance, closeTo(1, 0.02));
+    expect(formatDistance(distance), '1,0 km');
+  });
 }
 
 Listing _testListing({required String ownerId}) {
@@ -646,4 +693,13 @@ class _FakeModerationAiClient implements ModerationAiClient {
       reason: 'Kullanıcı uygulama dışındaki bir numaraya yönlendiriliyor.',
     );
   }
+}
+
+class _FakeLocationClient implements LocationClient {
+  const _FakeLocationClient(this.location);
+
+  final AppLocation location;
+
+  @override
+  Future<AppLocation> getCurrentLocation() async => location;
 }
