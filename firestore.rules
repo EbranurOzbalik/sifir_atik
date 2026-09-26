@@ -90,6 +90,16 @@ service cloud.firestore {
           && request.auth.uid == userId;
         allow create: if false;
       }
+
+      match /savedListings/{listingId} {
+        allow read, delete: if request.auth != null
+          && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.listingId == listingId
+          && request.resource.data.keys().hasOnly(['listingId', 'savedAt']);
+        allow update: if false;
+      }
     }
 
     match /listings/{listingId} {

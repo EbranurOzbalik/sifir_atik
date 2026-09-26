@@ -40,6 +40,7 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Şehir ve ilçeyi arayarak seçme
 - İlanlara tam adresi göstermeden yaklaşık konum ekleme
 - İlanları listeleme ve detayını görme
+- İlanları kullanıcı hesabına kaydetme ve Kaydedilenler ekranında görme
 - Konum izniyle 25 km içindeki ilanları mesafeye göre sıralama
 - Yakındaki ilanların uzaklığını metre veya kilometre olarak gösterme
 - Kategoriye göre filtreleme
@@ -172,6 +173,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Fotoğraf kaldırma işlemi
 - Arama ve kategori filtreleri
 - Yakındaki ilanları mesafeye göre filtreleme ve sıralama
+- İlan kaydetme ve kaydedilen ilanları listeleme
 - Kullanıcının kendi ilanına talep gönderememesi
 - Talep başarısız olduğunda yanlış başarı mesajı gösterilmemesi
 - Talep durumlarının ekranda doğru görünmesi
@@ -182,7 +184,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Bildirim merkezi, okunmamış sayacı ve bildirim okuma işlemleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 51 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 56 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış

@@ -132,6 +132,26 @@ class ListingRepository {
     }
   }
 
+  Stream<Set<String>> watchSavedListingIds(String userId) async* {
+    if (!_isFirebaseReady || userId.isEmpty) {
+      yield const <String>{};
+      return;
+    }
+
+    try {
+      final query = _db
+          .collection('users')
+          .doc(userId)
+          .collection('savedListings');
+
+      await for (final snapshot in query.snapshots()) {
+        yield snapshot.docs.map((doc) => doc.id).toSet();
+      }
+    } catch (_) {
+      yield const <String>{};
+    }
+  }
+
   Stream<List<ListingReport>> watchOpenReports() async* {
     if (!_isFirebaseReady) {
       yield const [];
@@ -181,6 +201,34 @@ class ListingRepository {
           .collection('listings')
           .doc(listing.id)
           .set(listing.toFirestore());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> setListingSaved({
+    required String userId,
+    required String listingId,
+    required bool isSaved,
+  }) async {
+    if (!_isFirebaseReady || userId.isEmpty || listingId.isEmpty) return false;
+
+    try {
+      final reference = _db
+          .collection('users')
+          .doc(userId)
+          .collection('savedListings')
+          .doc(listingId);
+
+      if (isSaved) {
+        await reference.set({
+          'listingId': listingId,
+          'savedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        await reference.delete();
+      }
       return true;
     } catch (_) {
       return false;

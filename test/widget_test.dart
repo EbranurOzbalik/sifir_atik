@@ -10,6 +10,7 @@ import 'package:sifir_atik/screens/home_page.dart';
 import 'package:sifir_atik/screens/listings_page.dart';
 import 'package:sifir_atik/screens/moderation_page.dart';
 import 'package:sifir_atik/screens/my_requests_page.dart';
+import 'package:sifir_atik/screens/saved_listings_page.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/location_service.dart';
 import 'package:sifir_atik/services/moderation_ai_service.dart';
@@ -220,6 +221,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bildirimler'), findsOneWidget);
+    expect(find.text('Kaydedilenler'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -350));
     await tester.pump();
     expect(find.text('Çıkış Yap'), findsOneWidget);
@@ -337,6 +339,61 @@ void main() {
     expect(find.text('Talep İletildi'), findsNothing);
     expect(find.text('Talep durumu: Beklemede'), findsNothing);
     expect(find.text('Talep şu anda gönderilemedi.'), findsOneWidget);
+  });
+
+  testWidgets('listing detail saves an ad for the current user', (
+    tester,
+  ) async {
+    final listing = _testListing(ownerId: 'owner-1');
+    final repository = _FakeListingRepository(listings: [listing]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Karton denemesi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('İlanı kaydet').first);
+    await tester.pump();
+
+    expect(repository.setListingSavedCount, 1);
+    expect(repository.savedListingIds, contains(listing.id));
+    expect(find.text('İlan kaydedildi.'), findsOneWidget);
+    expect(find.byTooltip('Kaydedilenlerden çıkar'), findsWidgets);
+  });
+
+  testWidgets('saved listings page shows only saved ads', (tester) async {
+    final savedListing = _testListing(ownerId: 'owner-1');
+    final otherListing = _testListing(
+      id: 'listing-2',
+      ownerId: 'owner-2',
+    ).copyWith(title: 'Kaydedilmemiş ilan');
+    final repository = _FakeListingRepository(
+      listings: [savedListing, otherListing],
+      savedListingIds: {savedListing.id},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SavedListingsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kaydedilenler'), findsOneWidget);
+    expect(find.text('Karton denemesi'), findsOneWidget);
+    expect(find.text('Kaydedilmemiş ilan'), findsNothing);
   });
 
   testWidgets('user cannot send request to their own listing', (tester) async {
@@ -604,9 +661,9 @@ void main() {
   });
 }
 
-Listing _testListing({required String ownerId}) {
+Listing _testListing({String id = 'listing-1', required String ownerId}) {
   return Listing(
-    id: 'listing-1',
+    id: id,
     title: 'Karton denemesi',
     category: 'Kağıt',
     location: 'Ortahisar',
@@ -646,14 +703,17 @@ class _FakeListingRepository extends ListingRepository {
     this.requests = const [],
     this.reports = const [],
     this.shouldSaveRequest = true,
-  });
+    Set<String> savedListingIds = const {},
+  }) : savedListingIds = {...savedListingIds};
 
   final List<Listing> listings;
   final List<ListingRequest> requests;
   final List<ListingReport> reports;
   final bool shouldSaveRequest;
+  final Set<String> savedListingIds;
   int addRequestCount = 0;
   int addReportCount = 0;
+  int setListingSavedCount = 0;
   ListingReport? lastReport;
 
   @override
@@ -670,6 +730,11 @@ class _FakeListingRepository extends ListingRepository {
   Stream<List<ListingReport>> watchOpenReports() => Stream.value(reports);
 
   @override
+  Stream<Set<String>> watchSavedListingIds(String userId) {
+    return Stream.value({...savedListingIds});
+  }
+
+  @override
   Future<bool> addRequest(ListingRequest request) async {
     addRequestCount += 1;
     return shouldSaveRequest;
@@ -679,6 +744,19 @@ class _FakeListingRepository extends ListingRepository {
   Future<bool> addReport(ListingReport report) async {
     addReportCount += 1;
     lastReport = report;
+    return true;
+  }
+
+  @override
+  Future<bool> setListingSaved({
+    required String userId,
+    required String listingId,
+    required bool isSaved,
+  }) async {
+    setListingSavedCount += 1;
+    isSaved
+        ? savedListingIds.add(listingId)
+        : savedListingIds.remove(listingId);
     return true;
   }
 }

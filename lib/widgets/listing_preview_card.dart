@@ -13,11 +13,15 @@ class ListingPreviewCard extends StatelessWidget {
     required this.onTap,
     this.request,
     this.distanceKm,
+    this.isSaved = false,
+    this.onSave,
   });
 
   final Listing listing;
   final ListingRequest? request;
   final double? distanceKm;
+  final bool isSaved;
+  final VoidCallback? onSave;
   final VoidCallback onTap;
 
   @override
@@ -68,10 +72,19 @@ class ListingPreviewCard extends StatelessWidget {
                               : Icons.apartment_rounded,
                         ),
                       ),
-                    if (request != null)
+                    if (onSave != null)
                       Positioned(
                         right: 10,
                         top: 10,
+                        child: _SaveButton(
+                          isSaved: isSaved,
+                          onPressed: onSave!,
+                        ),
+                      ),
+                    if (request != null)
+                      Positioned(
+                        right: 10,
+                        top: onSave == null ? 10 : 54,
                         child: _Badge(
                           label: requestStatusLabel(request!.status),
                           color: requestStatusColor(request!.status),
@@ -134,6 +147,35 @@ class ListingPreviewCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveButton extends StatelessWidget {
+  const _SaveButton({required this.isSaved, required this.onPressed});
+
+  final bool isSaved;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.surface.withValues(alpha: 0.94),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+            size: 20,
+            color: isSaved ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
         ),
       ),

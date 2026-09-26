@@ -74,6 +74,12 @@ void main() {
       expect(rules, contains('allow create: if false'));
     });
 
+    test('kaydedilen ilanlar yalnızca kullanıcıya özel tutulur', () {
+      expect(rules, contains('match /savedListings/{listingId}'));
+      expect(rules, contains('request.resource.data.listingId == listingId'));
+      expect(rules, contains(".hasOnly(['listingId', 'savedAt'])"));
+    });
+
     test('ilan bildirimleri yalnızca giriş yapan kullanıcıyla oluşturulur', () {
       expect(rules, contains('match /listingReports/{reportId}'));
       expect(

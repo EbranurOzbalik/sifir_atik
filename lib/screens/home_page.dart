@@ -141,6 +141,28 @@ class _HomeFeed extends StatelessWidget {
     );
   }
 
+  Future<void> _toggleSaved(
+    BuildContext context,
+    Listing listing,
+    bool isSaved,
+  ) async {
+    final userId = currentUserId;
+    if (userId == null) return;
+
+    final isUpdated = await repository.setListingSaved(
+      userId: userId,
+      listingId: listing.id,
+      isSaved: !isSaved,
+    );
+    if (!context.mounted || isUpdated) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Kaydedilenler şu anda güncellenemedi.')),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = responsiveHorizontalPadding(context);
@@ -153,150 +175,171 @@ class _HomeFeed extends StatelessWidget {
           final listings = snapshot.data ?? sampleListings;
           final visibleListings = listings.take(6).toList();
 
-          return CustomScrollView(
-            key: const PageStorageKey('home-feed-scroll'),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  12,
-                  horizontalPadding,
-                  0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: ResponsiveContent(
-                    maxWidth: 980,
-                    child: _HomeHero(
-                      currentUserName: currentUserName,
-                      currentUserId: currentUserId,
-                      onProfile: onProfile,
-                      onNotifications: onNotifications,
-                      onExplore: onExplore,
+          return StreamBuilder<Set<String>>(
+            stream: currentUserId == null
+                ? Stream.value(const <String>{})
+                : repository.watchSavedListingIds(currentUserId!),
+            initialData: const <String>{},
+            builder: (context, savedSnapshot) {
+              final savedListingIds = savedSnapshot.data ?? const <String>{};
+
+              return CustomScrollView(
+                key: const PageStorageKey('home-feed-scroll'),
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      12,
+                      horizontalPadding,
+                      0,
                     ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  16,
-                  horizontalPadding,
-                  0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: ResponsiveContent(
-                    maxWidth: 980,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: listingFilterCategories
-                            .take(7)
-                            .map(
-                              (category) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: _CategoryPill(
-                                  category: category,
-                                  onTap: onExplore,
-                                ),
-                              ),
-                            )
-                            .toList(),
+                    sliver: SliverToBoxAdapter(
+                      child: ResponsiveContent(
+                        maxWidth: 980,
+                        child: _HomeHero(
+                          currentUserName: currentUserName,
+                          currentUserId: currentUserId,
+                          onProfile: onProfile,
+                          onNotifications: onNotifications,
+                          onExplore: onExplore,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  22,
-                  horizontalPadding,
-                  12,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: ResponsiveContent(
-                    maxWidth: 980,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Son eklenen ilanlar',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.4,
-                                ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      16,
+                      horizontalPadding,
+                      0,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: ResponsiveContent(
+                        maxWidth: 980,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: listingFilterCategories
+                                .take(7)
+                                .map(
+                                  (category) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: _CategoryPill(
+                                      category: category,
+                                      onTap: onExplore,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ),
-                        TextButton(
-                          onPressed: onExplore,
-                          child: const Text('Tümünü gör'),
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      22,
+                      horizontalPadding,
+                      12,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: ResponsiveContent(
+                        maxWidth: 980,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Son eklenen ilanlar',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.4,
+                                    ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: onExplore,
+                              child: const Text('Tümünü gör'),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 270,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.72,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final listing = visibleListings[index];
-                    return ListingPreviewCard(
-                      listing: listing,
-                      onTap: () => _openDetail(context, listing),
-                    );
-                  }, childCount: visibleListings.length),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  22,
-                  horizontalPadding,
-                  28,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: ResponsiveContent(
-                    maxWidth: 980,
-                    child: Column(
-                      children: [
-                        _MyListingsShortcut(onTap: onMyListings),
-                        if (currentUserId != null)
-                          FutureBuilder<bool>(
-                            future: repository.isModerator(currentUserId!),
-                            builder: (context, snapshot) {
-                              if (snapshot.data != true) {
-                                return const SizedBox.shrink();
-                              }
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: _ModeratorShortcut(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) => ModerationPage(
-                                          repository: repository,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 270,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 0.72,
                           ),
-                      ],
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final listing = visibleListings[index];
+                        return ListingPreviewCard(
+                          listing: listing,
+                          isSaved: savedListingIds.contains(listing.id),
+                          onSave: currentUserId == null
+                              ? null
+                              : () => _toggleSaved(
+                                  context,
+                                  listing,
+                                  savedListingIds.contains(listing.id),
+                                ),
+                          onTap: () => _openDetail(context, listing),
+                        );
+                      }, childCount: visibleListings.length),
                     ),
                   ),
-                ),
-              ),
-            ],
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      22,
+                      horizontalPadding,
+                      28,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: ResponsiveContent(
+                        maxWidth: 980,
+                        child: Column(
+                          children: [
+                            _MyListingsShortcut(onTap: onMyListings),
+                            if (currentUserId != null)
+                              FutureBuilder<bool>(
+                                future: repository.isModerator(currentUserId!),
+                                builder: (context, snapshot) {
+                                  if (snapshot.data != true) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: _ModeratorShortcut(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) => ModerationPage(
+                                              repository: repository,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),

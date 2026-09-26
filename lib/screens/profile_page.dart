@@ -14,6 +14,7 @@ import 'moderation_page.dart';
 import 'my_listings_page.dart';
 import 'my_requests_page.dart';
 import 'notifications_page.dart';
+import 'saved_listings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({
@@ -190,6 +191,22 @@ class ProfilePage extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              ResponsiveContent(
+                child: _ProfileTile(
+                  icon: Icons.bookmark_border_rounded,
+                  title: 'Kaydedilenler',
+                  description: 'Daha sonra bakmak için kaydettiğim ilanlar.',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            SavedListingsPage(repository: repository),
                       ),
                     );
                   },

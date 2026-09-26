@@ -110,6 +110,33 @@ void main() {
       expect(ownerRequests.single.status, ListingRequestStatus.accepted);
     });
 
+    test('ilan kullanıcıya özel kaydedilip kaldırılabilir', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = ListingRepository(firestore: firestore);
+
+      final isSaved = await repository.setListingSaved(
+        userId: 'user-1',
+        listingId: 'listing-1',
+        isSaved: true,
+      );
+      final savedIds = await repository.watchSavedListingIds('user-1').first;
+
+      expect(isSaved, isTrue);
+      expect(savedIds, {'listing-1'});
+
+      final isRemoved = await repository.setListingSaved(
+        userId: 'user-1',
+        listingId: 'listing-1',
+        isSaved: false,
+      );
+      final remainingIds = await repository
+          .watchSavedListingIds('user-1')
+          .first;
+
+      expect(isRemoved, isTrue);
+      expect(remainingIds, isEmpty);
+    });
+
     test('talep silinince kullanıcının taleplerinden kaldırılır', () async {
       final firestore = FakeFirebaseFirestore();
       final repository = ListingRepository(firestore: firestore);

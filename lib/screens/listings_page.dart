@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +40,8 @@ class _ListingsPageState extends State<ListingsPage> {
   static const _nearbyRadiusKm = 25.0;
 
   final Map<String, ListingRequest> _requestsByListingId = {};
+  final Set<String> _savedListingIds = {};
+  final Set<String> _savingListingIds = {};
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'Tümü';
@@ -158,6 +162,37 @@ class _ListingsPageState extends State<ListingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _toggleSavedListing(Listing listing) async {
+    final userId = _currentUserId;
+    if (userId == null) {
+      _showLocationMessage('İlan kaydetmek için giriş yapmalısınız.');
+      return;
+    }
+    if (_savingListingIds.contains(listing.id)) return;
+
+    final shouldSave = !_savedListingIds.contains(listing.id);
+    setState(() => _savingListingIds.add(listing.id));
+    final isUpdated = await widget.repository.setListingSaved(
+      userId: userId,
+      listingId: listing.id,
+      isSaved: shouldSave,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _savingListingIds.remove(listing.id);
+      if (isUpdated) {
+        shouldSave
+            ? _savedListingIds.add(listing.id)
+            : _savedListingIds.remove(listing.id);
+      }
+    });
+
+    if (!isUpdated) {
+      _showLocationMessage('Kaydedilenler şu anda güncellenemedi.');
+    }
   }
 
   Widget _buildContent(BuildContext context) {
@@ -386,6 +421,10 @@ class _ListingsPageState extends State<ListingsPage> {
                   listing: listing,
                   request: _requestsByListingId[listing.id],
                   distanceKm: _nearbyOnly ? _distanceFor(listing) : null,
+                  isSaved: _savedListingIds.contains(listing.id),
+                  onSave: _currentUserId == null
+                      ? null
+                      : () => _toggleSavedListing(listing),
                   onTap: () => _openListingDetail(listing),
                 );
               }, childCount: filteredListings.length),
@@ -406,16 +445,28 @@ class _ListingsPageState extends State<ListingsPage> {
         final userId = _currentUserId;
         if (userId == null) {
           _requestsByListingId.clear();
+          _savedListingIds.clear();
           return _buildContent(context);
         }
 
-        return StreamBuilder<List<ListingRequest>>(
-          stream: widget.repository.watchRequestsByRequester(userId),
-          builder: (context, requestsSnapshot) {
-            if (requestsSnapshot.hasData) {
-              _syncRequests(requestsSnapshot.data!);
+        return StreamBuilder<Set<String>>(
+          stream: widget.repository.watchSavedListingIds(userId),
+          builder: (context, savedSnapshot) {
+            if (savedSnapshot.hasData) {
+              _savedListingIds
+                ..clear()
+                ..addAll(savedSnapshot.data!);
             }
-            return _buildContent(context);
+
+            return StreamBuilder<List<ListingRequest>>(
+              stream: widget.repository.watchRequestsByRequester(userId),
+              builder: (context, requestsSnapshot) {
+                if (requestsSnapshot.hasData) {
+                  _syncRequests(requestsSnapshot.data!);
+                }
+                return _buildContent(context);
+              },
+            );
           },
         );
       },
@@ -465,9 +516,11 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   ];
 
   late ListingRequest? _request = widget.request;
+  StreamSubscription<Set<String>>? _savedListingsSubscription;
   bool _isChangingRequest = false;
   bool _isReporting = false;
   bool _isSaved = false;
+  bool _isChangingSaved = false;
 
   bool get _hasFirebase => widget.isFirebaseReady ?? Firebase.apps.isNotEmpty;
 
@@ -481,6 +534,56 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
       widget.currentUserName ??
       _firebaseUser?.displayName ??
       _firebaseUser?.email;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = _currentUserId;
+    if (userId != null) {
+      _savedListingsSubscription = widget.repository
+          .watchSavedListingIds(userId)
+          .listen((listingIds) {
+            if (!mounted) return;
+            setState(() => _isSaved = listingIds.contains(widget.listing.id));
+          });
+    }
+  }
+
+  @override
+  void dispose() {
+    _savedListingsSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _toggleSaved() async {
+    if (_isChangingSaved) return;
+    final userId = _currentUserId;
+    if (userId == null) {
+      _showMessage('İlan kaydetmek için giriş yapmalısınız.');
+      return;
+    }
+
+    final shouldSave = !_isSaved;
+    setState(() => _isChangingSaved = true);
+    final isUpdated = await widget.repository.setListingSaved(
+      userId: userId,
+      listingId: widget.listing.id,
+      isSaved: shouldSave,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _isChangingSaved = false;
+      if (isUpdated) _isSaved = shouldSave;
+    });
+    _showMessage(
+      isUpdated
+          ? shouldSave
+                ? 'İlan kaydedildi.'
+                : 'İlan kaydedilenlerden çıkarıldı.'
+          : 'Kaydedilenler şu anda güncellenemedi.',
+    );
+  }
 
   ListingRequest _createRequest() {
     final listing = widget.listing;
@@ -644,7 +747,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
         actions: [
           IconButton(
             tooltip: _isSaved ? 'Kaydedilenlerden çıkar' : 'İlanı kaydet',
-            onPressed: () => setState(() => _isSaved = !_isSaved),
+            onPressed: _isChangingSaved ? null : _toggleSaved,
             icon: Icon(
               _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
             ),
@@ -781,7 +884,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
             children: [
               IconButton.outlined(
                 tooltip: _isSaved ? 'Kaydedilenlerden çıkar' : 'İlanı kaydet',
-                onPressed: () => setState(() => _isSaved = !_isSaved),
+                onPressed: _isChangingSaved ? null : _toggleSaved,
                 icon: Icon(
                   _isSaved
                       ? Icons.bookmark_rounded
