@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/models/contribution_summary.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/notification_service.dart';
 import 'package:sifir_atik/services/session_preferences.dart';
 import 'package:sifir_atik/services/user_profile_repository.dart';
+import 'package:sifir_atik/widgets/contribution_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
 import 'login_page.dart';
@@ -170,6 +172,21 @@ class ProfilePage extends StatelessWidget {
                   },
                 ),
               ),
+              if (user != null) ...[
+                const SizedBox(height: 12),
+                ResponsiveContent(
+                  child: StreamBuilder<ContributionSummary>(
+                    stream: repository.watchContributionSummary(user.uid),
+                    builder: (context, contributionSnapshot) {
+                      return ContributionCard(
+                        summary:
+                            contributionSnapshot.data ??
+                            const ContributionSummary.empty(),
+                      );
+                    },
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               ResponsiveContent(
                 child: Text(

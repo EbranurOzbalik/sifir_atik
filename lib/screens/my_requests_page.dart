@@ -8,7 +8,7 @@ import 'package:sifir_atik/widgets/listing_preview_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-enum _RequestFilter { all, accepted, pending }
+enum _RequestFilter { all, completed, accepted, pending }
 
 class MyRequestsPage extends StatefulWidget {
   const MyRequestsPage({
@@ -42,6 +42,12 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
   List<ListingRequest> _filteredRequests(List<ListingRequest> requests) {
     return switch (_filter) {
       _RequestFilter.all => requests,
+      _RequestFilter.completed =>
+        requests
+            .where(
+              (request) => request.status == ListingRequestStatus.completed,
+            )
+            .toList(),
       _RequestFilter.accepted =>
         requests
             .where((request) => request.status == ListingRequestStatus.accepted)
@@ -120,6 +126,16 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                               selected: _filter == _RequestFilter.all,
                               onSelected: () {
                                 setState(() => _filter = _RequestFilter.all);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _FilterChip(
+                              label: 'Tamamlanan',
+                              selected: _filter == _RequestFilter.completed,
+                              onSelected: () {
+                                setState(
+                                  () => _filter = _RequestFilter.completed,
+                                );
                               },
                             ),
                             const SizedBox(width: 8),
@@ -222,6 +238,10 @@ class _RequestsSummaryCard extends StatelessWidget {
       .where((request) => request.status == ListingRequestStatus.accepted)
       .length;
 
+  int get _completedCount => requests
+      .where((request) => request.status == ListingRequestStatus.completed)
+      .length;
+
   int get _pendingCount => requests
       .where((request) => request.status == ListingRequestStatus.pending)
       .length;
@@ -265,7 +285,7 @@ class _RequestsSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$_acceptedCount kabul edildi · $_pendingCount bekliyor',
+                  '$_completedCount tamamlandı · $_acceptedCount ayrıldı · $_pendingCount bekliyor',
                   style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -431,6 +451,24 @@ class _RequestCard extends StatelessWidget {
               ),
             ),
           ],
+          if (request.status == ListingRequestStatus.completed) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.eco_outlined, size: 18, color: statusColor),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    'Teslimat tamamlandı. Atık değerlendirmeye kazandırıldı.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (request.status == ListingRequestStatus.accepted &&
               request.ownerContactInfo.trim().isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -567,6 +605,7 @@ IconData _statusIcon(ListingRequestStatus status) {
     ListingRequestStatus.accepted => Icons.check_circle_outline_rounded,
     ListingRequestStatus.rejected => Icons.cancel_outlined,
     ListingRequestStatus.pending => Icons.hourglass_top_rounded,
+    ListingRequestStatus.completed => Icons.eco_outlined,
   };
 }
 

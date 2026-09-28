@@ -255,6 +255,7 @@ String requestStatusLabel(ListingRequestStatus status) {
     ListingRequestStatus.accepted => 'Kabul edildi',
     ListingRequestStatus.rejected => 'Reddedildi',
     ListingRequestStatus.pending => 'Beklemede',
+    ListingRequestStatus.completed => 'Tamamlandı',
   };
 }
 
@@ -263,6 +264,7 @@ Color requestStatusColor(ListingRequestStatus status) {
     ListingRequestStatus.accepted => const Color(0xFF2E7D32),
     ListingRequestStatus.rejected => const Color(0xFFC62828),
     ListingRequestStatus.pending => const Color(0xFFC86C00),
+    ListingRequestStatus.completed => const Color(0xFF347A65),
   };
 }
 

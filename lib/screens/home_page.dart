@@ -4,10 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/data/waste_categories.dart';
+import 'package:sifir_atik/models/contribution_summary.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/services/notification_service.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
+import 'package:sifir_atik/widgets/contribution_card.dart';
 import 'package:sifir_atik/widgets/listing_preview_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
@@ -206,6 +208,32 @@ class _HomeFeed extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (currentUserId != null)
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        16,
+                        horizontalPadding,
+                        0,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: ResponsiveContent(
+                          maxWidth: 980,
+                          child: StreamBuilder<ContributionSummary>(
+                            stream: repository.watchContributionSummary(
+                              currentUserId!,
+                            ),
+                            builder: (context, contributionSnapshot) {
+                              return ContributionCard(
+                                summary:
+                                    contributionSnapshot.data ??
+                                    const ContributionSummary.empty(),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,

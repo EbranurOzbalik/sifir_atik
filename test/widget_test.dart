@@ -9,6 +9,7 @@ import 'package:sifir_atik/screens/create_listing_page.dart';
 import 'package:sifir_atik/screens/home_page.dart';
 import 'package:sifir_atik/screens/listings_page.dart';
 import 'package:sifir_atik/screens/moderation_page.dart';
+import 'package:sifir_atik/screens/my_listings_page.dart';
 import 'package:sifir_atik/screens/my_requests_page.dart';
 import 'package:sifir_atik/screens/saved_listings_page.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
@@ -511,44 +512,54 @@ void main() {
     expect(find.text('Kendi ilanınızı bildiremezsiniz.'), findsOneWidget);
   });
 
-  testWidgets('request statuses are shown as pending accepted and rejected', (
-    tester,
-  ) async {
-    final repository = _FakeListingRepository(
-      requests: [
-        _testRequest('request-pending', ListingRequestStatus.pending),
-        _testRequest(
-          'request-accepted',
-          ListingRequestStatus.accepted,
-          ownerContactInfo: '0555 111 22 33',
+  testWidgets(
+    'request statuses include pending accepted rejected and completed',
+    (tester) async {
+      final repository = _FakeListingRepository(
+        requests: [
+          _testRequest('request-pending', ListingRequestStatus.pending),
+          _testRequest(
+            'request-accepted',
+            ListingRequestStatus.accepted,
+            ownerContactInfo: '0555 111 22 33',
+          ),
+          _testRequest('request-rejected', ListingRequestStatus.rejected),
+          _testRequest('request-completed', ListingRequestStatus.completed),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MyRequestsPage(
+            repository: repository,
+            currentUserId: 'user-1',
+            isFirebaseReady: true,
+          ),
         ),
-        _testRequest('request-rejected', ListingRequestStatus.rejected),
-      ],
-    );
+      );
+      await tester.pump();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: MyRequestsPage(
-          repository: repository,
-          currentUserId: 'user-1',
-          isFirebaseReady: true,
-        ),
-      ),
-    );
-    await tester.pump();
+      expect(find.text('Beklemede'), findsWidgets);
+      expect(find.text('Kabul edildi'), findsOneWidget);
+      expect(find.text('İlan sahibinin telefonu'), findsOneWidget);
+      expect(find.text('0555 111 22 33'), findsOneWidget);
+      expect(find.text('Talep gönderildi: 8 Eylül'), findsWidgets);
+      expect(find.text('Ara'), findsOneWidget);
+      expect(find.text("WhatsApp'tan yaz"), findsOneWidget);
 
-    expect(find.text('Beklemede'), findsWidgets);
-    expect(find.text('Kabul edildi'), findsOneWidget);
-    expect(find.text('İlan sahibinin telefonu'), findsOneWidget);
-    expect(find.text('0555 111 22 33'), findsOneWidget);
-    expect(find.text('Talep gönderildi: 8 Eylül'), findsWidgets);
-    expect(find.text('Ara'), findsOneWidget);
-    expect(find.text("WhatsApp'tan yaz"), findsOneWidget);
+      await tester.ensureVisible(find.text('Reddedildi', skipOffstage: false));
+      await tester.pumpAndSettle();
+      expect(find.text('Reddedildi'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Reddedildi', skipOffstage: false));
-    await tester.pumpAndSettle();
-    expect(find.text('Reddedildi'), findsOneWidget);
-  });
+      await tester.ensureVisible(find.text('Tamamlandı', skipOffstage: false));
+      await tester.pumpAndSettle();
+      expect(find.text('Tamamlandı'), findsOneWidget);
+      expect(
+        find.text('Teslimat tamamlandı. Atık değerlendirmeye kazandırıldı.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('owner contact is hidden until request is accepted', (
     tester,
@@ -579,6 +590,51 @@ void main() {
     expect(find.text('0555 111 22 33'), findsNothing);
     expect(find.text('Ara'), findsNothing);
     expect(find.text("WhatsApp'tan yaz"), findsNothing);
+  });
+
+  testWidgets('owner can complete a reserved listing delivery', (tester) async {
+    final request = _testRequest(
+      'request-accepted',
+      ListingRequestStatus.accepted,
+    );
+    final listing = _testListing(
+      id: request.listingId,
+      ownerId: 'owner-1',
+    ).copyWith(status: ListingStatus.reserved, acceptedRequestId: request.id);
+    final repository = _FakeListingRepository(
+      listings: [listing],
+      requests: [request],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyListingsPage(
+          repository: repository,
+          currentUserId: 'owner-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ayrıldı'), findsOneWidget);
+    expect(find.text('Teslim Edildi'), findsOneWidget);
+
+    await tester.tap(find.text('Teslim Edildi'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Teslim Edildi'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.completeListingCount, 1);
+    expect(
+      find.text('Teslimat tamamlandı. Katkınıza eklendi.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('listings can be searched and filtered', (tester) async {
@@ -714,15 +770,30 @@ class _FakeListingRepository extends ListingRepository {
   int addRequestCount = 0;
   int addReportCount = 0;
   int setListingSavedCount = 0;
+  int completeListingCount = 0;
   ListingReport? lastReport;
 
   @override
   Stream<List<Listing>> watchListings() => Stream.value(listings);
 
   @override
+  Stream<List<Listing>> watchMyListings(String userId) {
+    return Stream.value(
+      listings.where((listing) => listing.ownerId == userId).toList(),
+    );
+  }
+
+  @override
   Stream<List<ListingRequest>> watchRequestsByRequester(String userId) {
     return Stream.value(
       requests.where((request) => request.requesterId == userId).toList(),
+    );
+  }
+
+  @override
+  Stream<List<ListingRequest>> watchRequestsByListingOwner(String ownerId) {
+    return Stream.value(
+      requests.where((request) => request.listingOwnerId == ownerId).toList(),
     );
   }
 
@@ -757,6 +828,15 @@ class _FakeListingRepository extends ListingRepository {
     isSaved
         ? savedListingIds.add(listingId)
         : savedListingIds.remove(listingId);
+    return true;
+  }
+
+  @override
+  Future<bool> completeListing({
+    required String listingId,
+    required String requestId,
+  }) async {
+    completeListingCount += 1;
     return true;
   }
 }

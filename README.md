@@ -48,6 +48,8 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Kurumsal ve doğrulanmış kurum ilanlarını rozetle ayırt etme
 - Başlık, kategori ve konuma göre arama yapma
 - Kullanıcının kendi ilanlarını düzenlemesi ve silmesi
+- Talep kabul edildiğinde ilanı ayrıldı durumuna getirme
+- Teslim edilen ilanı tamamlayıp yeni taleplere kapatma
 
 ### Talep ve iletişim akışı
 
@@ -58,10 +60,18 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Talep durumunu beklemede, kabul edildi veya reddedildi olarak gösterme
 - Kabul edilen talepte telefon bilgisini açma
 - Arama ve WhatsApp üzerinden iletişim kurma
+- Tamamlanan teslimatı iki kullanıcının talep geçmişinde gösterme
 - Yeni talep geldiğinde ilan sahibine bildirim oluşturma
 - Talep kabul veya reddedildiğinde talep gönderene bildirim oluşturma
+- Teslimat tamamlandığında talep gönderene bildirim oluşturma
 - Okunmamış bildirim sayısını ana ekranda gösterme
 - Uygulama içindeki bildirim merkezinden taleplere geçme
+
+### Katkı takibi
+
+- Tamamlanan teslimat sayısını kullanıcı hesabında tutma
+- Kilogram olarak girilen ilan miktarlarını katkı toplamına ekleme
+- Ana ekran ve profilde tamamlanan teslimat ile değerlendirilen miktarı gösterme
 
 ### Bildirme ve moderasyon akışı
 
@@ -177,6 +187,8 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Kullanıcının kendi ilanına talep gönderememesi
 - Talep başarısız olduğunda yanlış başarı mesajı gösterilmemesi
 - Talep durumlarının ekranda doğru görünmesi
+- Talep kabul edildiğinde ilanı ayırma ve diğer bekleyen talepleri reddetme
+- Teslimat tamamlandığında ilan, talep ve katkı bilgisini birlikte güncelleme
 - İlan düzenleme ve silme işlemlerinin talep verileriyle birlikte güncellenmesi
 - Firestore kurallarında ilan sahibi ve moderatör kontrolü
 - Hesap türü ve kurumsal doğrulama bilgilerinin güvenlik kontrolü
@@ -184,7 +196,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Bildirim merkezi, okunmamış sayacı ve bildirim okuma işlemleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 56 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 59 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış
@@ -199,7 +211,9 @@ Android emülatörde iki farklı kullanıcıyla şu akışı manuel olarak dened
 6. İkinci kullanıcıda talebin kabul edildiğini ve iletişim alanının açıldığını
    kontrol ettim.
 7. Arama ve WhatsApp butonlarının göründüğünü denedim.
-8. Bir ilanı bildirip moderatör panelinde göründüğünü kontrol ettim.
+8. İlan sahibi hesabından teslimatı tamamladım.
+9. İlanın yeni taleplere kapandığını ve katkı kartının güncellendiğini gördüm.
+10. Bir ilanı bildirip moderatör panelinde göründüğünü kontrol ettim.
 
 ## Şu Anki Durum
 
@@ -207,7 +221,8 @@ Proje Android emülatörde demo yapılabilecek, iOS 15 ve üzeri simülatörlerd
 derlenip açılabilecek seviyededir. Kullanıcı giriş yapabiliyor, ilan
 oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor, kendi ilanlarını
 yönetebiliyor, yakındaki ilanları mesafeye göre görebiliyor, başka ilanlara talep
-gönderebiliyor ve uygunsuz ilanlar moderatör tarafından incelenebiliyor.
+gönderebiliyor, teslimatları tamamlayarak çevresel katkısını takip edebiliyor ve
+uygunsuz ilanlar moderatör tarafından incelenebiliyor.
 
 Google Play ve App Store dağıtımı öncesinde mağaza imzaları, gizlilik metinleri
 ve gerçek cihaz kontrolleri ayrıca tamamlanmalıdır.

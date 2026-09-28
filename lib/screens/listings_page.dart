@@ -1089,5 +1089,6 @@ IconData _requestStatusIcon(ListingRequestStatus status) {
     ListingRequestStatus.accepted => Icons.check_circle_outline_rounded,
     ListingRequestStatus.rejected => Icons.cancel_outlined,
     ListingRequestStatus.pending => Icons.hourglass_top_rounded,
+    ListingRequestStatus.completed => Icons.eco_outlined,
   };
 }
