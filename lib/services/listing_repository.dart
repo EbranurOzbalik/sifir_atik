@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:sifir_atik/models/contribution_summary.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
@@ -36,10 +37,10 @@ class ListingRepository {
       await for (final snapshot in query.snapshots()) {
         final listings = snapshot.docs
             .map(Listing.fromFirestore)
-            .where((listing) => listing.title.isNotEmpty)
+            .where((listing) => listing.title.isNotEmpty && listing.isActive)
             .toList();
 
-        yield listings.isEmpty ? sampleListings : listings;
+        yield listings;
       }
     } catch (_) {
       yield sampleListings;
@@ -129,6 +130,17 @@ class ListingRepository {
       }
     } catch (_) {
       yield const [];
+    }
+  }
+
+  Stream<ContributionSummary> watchContributionSummary(String userId) async* {
+    if (userId.isEmpty) {
+      yield const ContributionSummary.empty();
+      return;
+    }
+
+    await for (final listings in watchMyListings(userId)) {
+      yield ContributionSummary.fromListings(listings);
     }
   }
 
@@ -392,9 +404,99 @@ class ListingRepository {
     if (!_isFirebaseReady || requestId.isEmpty) return false;
 
     try {
-      await _db.collection('listingRequests').doc(requestId).update({
-        'status': status.name,
+      final requestReference = _db.collection('listingRequests').doc(requestId);
+
+      if (status == ListingRequestStatus.completed) {
+        final requestSnapshot = await requestReference.get();
+        if (!requestSnapshot.exists) return false;
+        final request = ListingRequest.fromFirestore(requestSnapshot);
+        return completeListing(
+          listingId: request.listingId,
+          requestId: request.id,
+        );
+      }
+
+      if (status != ListingRequestStatus.accepted) {
+        await requestReference.update({'status': status.name});
+        return true;
+      }
+
+      final requestSnapshot = await requestReference.get();
+      if (!requestSnapshot.exists) return false;
+      final request = ListingRequest.fromFirestore(requestSnapshot);
+      final listingReference = _db
+          .collection('listings')
+          .doc(request.listingId);
+      final listingSnapshot = await listingReference.get();
+      if (!listingSnapshot.exists) return false;
+
+      final relatedRequests = await _db
+          .collection('listingRequests')
+          .where('listingId', isEqualTo: request.listingId)
+          .get();
+      final batch = _db.batch();
+
+      for (final requestDocument in relatedRequests.docs) {
+        if (requestDocument.id == requestId) {
+          batch.update(requestDocument.reference, {
+            'status': ListingRequestStatus.accepted.name,
+          });
+          continue;
+        }
+
+        final otherStatus = requestDocument.data()['status'] as String?;
+        if (otherStatus == ListingRequestStatus.pending.name) {
+          batch.update(requestDocument.reference, {
+            'status': ListingRequestStatus.rejected.name,
+          });
+        }
+      }
+
+      batch.update(listingReference, {
+        'status': ListingStatus.reserved.name,
+        'acceptedRequestId': requestId,
       });
+      await batch.commit();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> completeListing({
+    required String listingId,
+    required String requestId,
+  }) async {
+    if (!_isFirebaseReady || listingId.isEmpty || requestId.isEmpty) {
+      return false;
+    }
+
+    try {
+      final listingReference = _db.collection('listings').doc(listingId);
+      final requestReference = _db.collection('listingRequests').doc(requestId);
+      final listingSnapshot = await listingReference.get();
+      final requestSnapshot = await requestReference.get();
+      if (!listingSnapshot.exists || !requestSnapshot.exists) return false;
+
+      final listing = Listing.fromFirestore(listingSnapshot);
+      final request = ListingRequest.fromFirestore(requestSnapshot);
+      if (listing.status != ListingStatus.reserved ||
+          listing.acceptedRequestId != requestId ||
+          request.listingId != listingId ||
+          request.status != ListingRequestStatus.accepted) {
+        return false;
+      }
+
+      final completedAt = Timestamp.fromDate(DateTime.now());
+      final batch = _db.batch();
+      batch.update(listingReference, {
+        'status': ListingStatus.completed.name,
+        'completedAt': completedAt,
+      });
+      batch.update(requestReference, {
+        'status': ListingRequestStatus.completed.name,
+      });
+      await batch.commit();
       return true;
     } catch (_) {
       return false;

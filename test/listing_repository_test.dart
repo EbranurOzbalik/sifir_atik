@@ -91,24 +91,78 @@ void main() {
       expect(photoStorage.deletedUrl, listing.imageUrl);
     });
 
-    test('talep durumu kabul veya ret olarak güncellenebilir', () async {
-      final firestore = FakeFirebaseFirestore();
-      final repository = ListingRepository(firestore: firestore);
-      final request = _request(id: 'request-1');
+    test(
+      'talep kabul edilince ilan ayrılır ve diğer talepler reddedilir',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        final repository = ListingRepository(firestore: firestore);
+        final request = _request(id: 'request-1');
+        final otherRequest = _request(id: 'request-2', requesterId: 'user-2');
 
-      await repository.addRequest(request);
+        await repository.addListing(_listing());
+        await repository.addRequest(request);
+        await repository.addRequest(otherRequest);
 
-      final isUpdated = await repository.updateRequestStatus(
-        request.id,
-        ListingRequestStatus.accepted,
-      );
-      final ownerRequests = await repository
-          .watchRequestsByListingOwner('owner-1')
-          .first;
+        final isUpdated = await repository.updateRequestStatus(
+          request.id,
+          ListingRequestStatus.accepted,
+        );
+        final ownerRequests = await repository
+            .watchRequestsByListingOwner('owner-1')
+            .first;
+        final listings = await repository.watchMyListings('owner-1').first;
 
-      expect(isUpdated, isTrue);
-      expect(ownerRequests.single.status, ListingRequestStatus.accepted);
-    });
+        expect(isUpdated, isTrue);
+        expect(
+          ownerRequests.singleWhere((item) => item.id == request.id).status,
+          ListingRequestStatus.accepted,
+        );
+        expect(
+          ownerRequests
+              .singleWhere((item) => item.id == otherRequest.id)
+              .status,
+          ListingRequestStatus.rejected,
+        );
+        expect(listings.single.status, ListingStatus.reserved);
+        expect(listings.single.acceptedRequestId, request.id);
+      },
+    );
+
+    test(
+      'teslimat tamamlanınca ilan, talep ve katkı birlikte güncellenir',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        final repository = ListingRepository(firestore: firestore);
+        final listing = _listing();
+        final request = _request();
+
+        await repository.addListing(listing);
+        await repository.addRequest(request);
+        await repository.updateRequestStatus(
+          request.id,
+          ListingRequestStatus.accepted,
+        );
+
+        final isCompleted = await repository.completeListing(
+          listingId: listing.id,
+          requestId: request.id,
+        );
+        final listings = await repository.watchMyListings('owner-1').first;
+        final requests = await repository
+            .watchRequestsByRequester('user-1')
+            .first;
+        final contribution = await repository
+            .watchContributionSummary('owner-1')
+            .first;
+
+        expect(isCompleted, isTrue);
+        expect(listings.single.status, ListingStatus.completed);
+        expect(listings.single.completedAt, isNotNull);
+        expect(requests.single.status, ListingRequestStatus.completed);
+        expect(contribution.completedCount, 1);
+        expect(contribution.totalKilograms, 10);
+      },
+    );
 
     test('ilan kullanıcıya özel kaydedilip kaldırılabilir', () async {
       final firestore = FakeFirebaseFirestore();
@@ -243,6 +297,7 @@ ListingRequest _request({
   String listingId = 'listing-1',
   String listingOwnerId = 'owner-1',
   String listingTitle = 'Temiz karton kutular',
+  String requesterId = 'user-1',
 }) {
   return ListingRequest(
     id: id,
@@ -252,7 +307,7 @@ ListingRequest _request({
     listingAmount: '10 kg',
     listingLocation: 'Trabzon / Ortahisar',
     ownerContactInfo: '0555 111 22 33',
-    requesterId: 'user-1',
+    requesterId: requesterId,
     requesterName: 'Zeynep',
     status: ListingRequestStatus.pending,
     createdAt: DateTime(2026, 9, 8),

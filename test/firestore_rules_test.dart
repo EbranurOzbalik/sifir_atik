@@ -67,6 +67,15 @@ void main() {
       expect(rules, contains('request.resource.data.longitude <= 180'));
     });
 
+    test('ilan yaşam döngüsü ve yeni talep durumu sınırlandırılır', () {
+      expect(rules, contains("request.resource.data.status == 'active'"));
+      expect(rules, contains("data.get('status', 'active') == 'active'"));
+      expect(
+        rules,
+        contains("['pending', 'accepted', 'rejected', 'completed']"),
+      );
+    });
+
     test('bildirim ve cihaz kayıtları kullanıcıya özel tutulur', () {
       expect(rules, contains('match /devices/{deviceId}'));
       expect(rules, contains('match /notifications/{notificationId}'));

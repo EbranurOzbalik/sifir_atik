@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ListingRequestStatus { pending, accepted, rejected }
+enum ListingRequestStatus { pending, accepted, rejected, completed }
 
 class ListingRequest {
   const ListingRequest({

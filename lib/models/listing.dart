@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 
+enum ListingStatus { active, reserved, completed }
+
 class Listing {
   const Listing({
     required this.id,
@@ -19,6 +21,9 @@ class Listing {
     this.isOwnerVerified = false,
     this.latitude,
     this.longitude,
+    this.status = ListingStatus.active,
+    this.acceptedRequestId,
+    this.completedAt,
   });
 
   final String id;
@@ -37,8 +42,12 @@ class Listing {
   final bool isOwnerVerified;
   final double? latitude;
   final double? longitude;
+  final ListingStatus status;
+  final String? acceptedRequestId;
+  final DateTime? completedAt;
 
   bool get hasCoordinates => latitude != null && longitude != null;
+  bool get isActive => status == ListingStatus.active;
 
   Listing copyWith({
     String? title,
@@ -53,6 +62,11 @@ class Listing {
     double? latitude,
     double? longitude,
     bool clearCoordinates = false,
+    ListingStatus? status,
+    String? acceptedRequestId,
+    bool clearAcceptedRequestId = false,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
   }) {
     return Listing(
       id: id,
@@ -71,12 +85,19 @@ class Listing {
       isOwnerVerified: isOwnerVerified,
       latitude: clearCoordinates ? null : latitude ?? this.latitude,
       longitude: clearCoordinates ? null : longitude ?? this.longitude,
+      status: status ?? this.status,
+      acceptedRequestId: clearAcceptedRequestId
+          ? null
+          : acceptedRequestId ?? this.acceptedRequestId,
+      completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
     );
   }
 
   factory Listing.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     final createdAtValue = data['createdAt'];
+    final completedAtValue = data['completedAt'];
+    final statusName = data['status'] as String? ?? ListingStatus.active.name;
 
     return Listing(
       id: doc.id,
@@ -98,6 +119,14 @@ class Listing {
       isOwnerVerified: data['isOwnerVerified'] as bool? ?? false,
       latitude: (data['latitude'] as num?)?.toDouble(),
       longitude: (data['longitude'] as num?)?.toDouble(),
+      status: ListingStatus.values.firstWhere(
+        (status) => status.name == statusName,
+        orElse: () => ListingStatus.active,
+      ),
+      acceptedRequestId: data['acceptedRequestId'] as String?,
+      completedAt: completedAtValue is Timestamp
+          ? completedAtValue.toDate()
+          : null,
     );
   }
 
@@ -115,9 +144,13 @@ class Listing {
       'contactInfo': contactInfo,
       'ownerAccountType': ownerAccountType.value,
       'isOwnerVerified': isOwnerVerified,
+      'status': status.name,
       if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      if (acceptedRequestId != null && acceptedRequestId!.isNotEmpty)
+        'acceptedRequestId': acceptedRequestId,
+      if (completedAt != null) 'completedAt': Timestamp.fromDate(completedAt!),
     };
   }
 }

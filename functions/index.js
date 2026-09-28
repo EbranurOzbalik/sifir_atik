@@ -37,17 +37,32 @@ exports.onListingRequestStatusUpdated = onDocumentUpdated(
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!after?.requesterId || before?.status === after.status) return;
-    if (after.status !== "accepted" && after.status !== "rejected") return;
+    if (
+      after.status !== "accepted" &&
+      after.status !== "rejected" &&
+      after.status !== "completed"
+    ) return;
 
     const accepted = after.status === "accepted";
+    const completed = after.status === "completed";
     const listingTitle = after.listingTitle || "İlan";
 
     await notifyUser(after.requesterId, {
-      title: accepted ? "Talebin kabul edildi" : "Talebin reddedildi",
-      body: accepted
-        ? `“${listingTitle}” ilanı için iletişim bilgisi açıldı.`
-        : `“${listingTitle}” ilanı için gönderdiğin talep reddedildi.`,
-      type: accepted ? "requestAccepted" : "requestRejected",
+      title: completed
+        ? "Teslimat tamamlandı"
+        : accepted
+          ? "Talebin kabul edildi"
+          : "Talebin reddedildi",
+      body: completed
+        ? `“${listingTitle}” teslimatı tamamlandı ve katkına eklendi.`
+        : accepted
+          ? `“${listingTitle}” ilanı için iletişim bilgisi açıldı.`
+          : `“${listingTitle}” ilanı için gönderdiğin talep reddedildi.`,
+      type: completed
+        ? "requestCompleted"
+        : accepted
+          ? "requestAccepted"
+          : "requestRejected",
       listingId: after.listingId || "",
       requestId: event.params.requestId,
     });
