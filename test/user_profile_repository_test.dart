@@ -77,5 +77,38 @@ void main() {
         expect(data['isOrganizationVerified'], isFalse);
       },
     );
+
+    test('profil bilgilerini hesap türünü değiştirmeden günceller', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = UserProfileRepository(firestore: firestore);
+
+      await repository.createProfileIfMissing(
+        uid: 'organization-2',
+        displayName: 'Eski Kurum Adı',
+        email: 'kurum@example.com',
+        accountType: AccountType.organization,
+        city: 'Trabzon',
+        contactPersonName: 'Eski Yetkili',
+        organizationType: OrganizationType.company,
+      );
+
+      await repository.updateProfile(
+        uid: 'organization-2',
+        displayName: 'Yeni Kurum Adı',
+        city: 'Rize',
+        contactPersonName: 'Yeni Yetkili',
+        accountType: AccountType.organization,
+        organizationType: OrganizationType.association,
+      );
+
+      final profile = await repository.getProfile('organization-2');
+
+      expect(profile!.displayName, 'Yeni Kurum Adı');
+      expect(profile.city, 'Rize');
+      expect(profile.contactPersonName, 'Yeni Yetkili');
+      expect(profile.organizationType, OrganizationType.association);
+      expect(profile.accountType, AccountType.organization);
+      expect(profile.email, 'kurum@example.com');
+    });
   });
 }

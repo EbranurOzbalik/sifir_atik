@@ -20,6 +20,29 @@ class UserProfileRepository {
     return data == null ? null : UserProfile.fromMap(snapshot.id, data);
   }
 
+  Future<void> updateProfile({
+    required String uid,
+    required String displayName,
+    required String city,
+    required AccountType accountType,
+    String contactPersonName = '',
+    OrganizationType? organizationType,
+  }) async {
+    if (!_isReady) return;
+
+    await _database.collection('users').doc(uid).update({
+      'displayName': displayName.trim(),
+      'city': city.trim(),
+      'contactPersonName': accountType == AccountType.organization
+          ? contactPersonName.trim()
+          : '',
+      'organizationType': accountType == AccountType.organization
+          ? organizationType?.value ?? OrganizationType.other.value
+          : '',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> createProfileIfMissing({
     required String uid,
     required String displayName,
