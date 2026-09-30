@@ -11,6 +11,7 @@ import 'package:sifir_atik/services/user_profile_repository.dart';
 import 'package:sifir_atik/widgets/contribution_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
 
+import 'edit_profile_page.dart';
 import 'login_page.dart';
 import 'moderation_page.dart';
 import 'my_listings_page.dart';
@@ -18,7 +19,7 @@ import 'my_requests_page.dart';
 import 'notifications_page.dart';
 import 'saved_listings_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({
     super.key,
     this.repository = const ListingRepository(),
@@ -30,6 +31,11 @@ class ProfilePage extends StatelessWidget {
   final UserProfileRepository profileRepository;
   final bool embedded;
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   User? get _user =>
       Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
 
@@ -118,10 +124,10 @@ class ProfilePage extends StatelessWidget {
     final email = user?.email ?? 'Giriş yapılmadı';
     final moderatorFuture = user == null
         ? Future<bool>.value(false)
-        : repository.isModerator(user.uid);
+        : widget.repository.isModerator(user.uid);
     final profileFuture = user == null
         ? Future<UserProfile?>.value(null)
-        : profileRepository.getProfile(user.uid);
+        : widget.profileRepository.getProfile(user.uid);
 
     final content = SafeArea(
       child: FutureBuilder<bool>(
@@ -132,7 +138,7 @@ class ProfilePage extends StatelessWidget {
           return ListView(
             padding: responsivePagePadding(context, top: 20),
             children: [
-              if (embedded) ...[
+              if (widget.embedded) ...[
                 ResponsiveContent(
                   child: Text(
                     'Profilim',
@@ -168,6 +174,22 @@ class ProfilePage extends StatelessWidget {
                       isOrganizationVerified:
                           profile?.isOrganizationVerified ?? false,
                       isModerator: isModerator,
+                      onEdit: user == null || profile == null
+                          ? null
+                          : () async {
+                              final changed = await Navigator.of(context).push(
+                                MaterialPageRoute<bool>(
+                                  builder: (_) => EditProfilePage(
+                                    profile: profile,
+                                    repository: widget.profileRepository,
+                                  ),
+                                ),
+                              );
+
+                              if (changed == true && mounted) {
+                                setState(() {});
+                              }
+                            },
                     );
                   },
                 ),
@@ -176,7 +198,9 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(height: 12),
                 ResponsiveContent(
                   child: StreamBuilder<ContributionSummary>(
-                    stream: repository.watchContributionSummary(user.uid),
+                    stream: widget.repository.watchContributionSummary(
+                      user.uid,
+                    ),
                     builder: (context, contributionSnapshot) {
                       return ContributionCard(
                         summary:
@@ -223,7 +247,7 @@ class ProfilePage extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            SavedListingsPage(repository: repository),
+                            SavedListingsPage(repository: widget.repository),
                       ),
                     );
                   },
@@ -270,7 +294,7 @@ class ProfilePage extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) =>
-                              ModerationPage(repository: repository),
+                              ModerationPage(repository: widget.repository),
                         ),
                       );
                     },
@@ -309,7 +333,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
 
-    if (embedded) return content;
+    if (widget.embedded) return content;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profilim')),
@@ -328,6 +352,7 @@ class _ProfileHeader extends StatelessWidget {
     required this.organizationType,
     required this.isOrganizationVerified,
     required this.isModerator,
+    required this.onEdit,
   });
 
   final String displayName;
@@ -338,6 +363,7 @@ class _ProfileHeader extends StatelessWidget {
   final OrganizationType? organizationType;
   final bool isOrganizationVerified;
   final bool isModerator;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -452,6 +478,14 @@ class _ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (onEdit != null) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Profili düzenle',
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+            ),
+          ],
         ],
       ),
     );
