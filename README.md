@@ -61,6 +61,8 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 - Kabul edilen talepte telefon bilgisini açma
 - Arama ve WhatsApp üzerinden iletişim kurma
 - Tamamlanan teslimatı iki kullanıcının talep geçmişinde gösterme
+- Tamamlanan teslimattan sonra ilan sahibine 1–5 yıldız ve kısa yorum verme
+- İlan sahibinin güven puanını profilinde ve ilan detayında gösterme
 - Yeni talep geldiğinde ilan sahibine bildirim oluşturma
 - Talep kabul veya reddedildiğinde talep gönderene bildirim oluşturma
 - Teslimat tamamlandığında talep gönderene bildirim oluşturma
@@ -84,7 +86,7 @@ oluşturma ve talep takibi olan daha tamamlanmış bir akışa dönüşüyor.
 ### Veritabanı ve dosya tarafı
 
 - Firebase Authentication ile kullanıcı işlemleri
-- Cloud Firestore ile ilan ve talep verilerini tutma
+- Cloud Firestore ile ilan, talep ve değerlendirme verilerini tutma
 - Firebase Storage ile ilan fotoğraflarını saklama
 - Firestore güvenlik kurallarıyla ilan, talep ve moderatör izinlerini kontrol etme
 - Storage kurallarıyla fotoğraf yükleme ve silme izinlerini sınırlandırma
@@ -189,6 +191,8 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Talep durumlarının ekranda doğru görünmesi
 - Talep kabul edildiğinde ilanı ayırma ve diğer bekleyen talepleri reddetme
 - Teslimat tamamlandığında ilan, talep ve katkı bilgisini birlikte güncelleme
+- Tamamlanan talebe yalnızca bir kez değerlendirme ekleme
+- Değerlendirmelerden ilan sahibinin güven puanını hesaplama
 - İlan düzenleme ve silme işlemlerinin talep verileriyle birlikte güncellenmesi
 - Firestore kurallarında ilan sahibi ve moderatör kontrolü
 - Hesap türü ve kurumsal doğrulama bilgilerinin güvenlik kontrolü
@@ -196,7 +200,7 @@ testleri bulunuyor. Testlerde özellikle şu kısımları kontrol ettim:
 - Bildirim merkezi, okunmamış sayacı ve bildirim okuma işlemleri
 - İlan bildirme ve moderatör paneli davranışı
 
-Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 59 testin
+Son kontrolde `flutter analyze` hatasız çalıştı ve `flutter test` ile 65 testin
 tamamı geçti.
 
 ## Manuel Denediğim Akış
@@ -222,7 +226,9 @@ derlenip açılabilecek seviyededir. Kullanıcı giriş yapabiliyor, ilan
 oluşturabiliyor, fotoğraf ekleyebiliyor, şehir/ilçe seçebiliyor, kendi ilanlarını
 yönetebiliyor, yakındaki ilanları mesafeye göre görebiliyor, başka ilanlara talep
 gönderebiliyor, teslimatları tamamlayarak çevresel katkısını takip edebiliyor ve
-uygunsuz ilanlar moderatör tarafından incelenebiliyor.
+tamamlanan teslimatlarda ilan sahibini değerlendirebiliyor. İlan sahibi güven
+puanı da yeni talepler gönderilmeden önce ilan detayında görülebiliyor. Uygunsuz
+ilanlar moderatör tarafından incelenebiliyor.
 
 Google Play ve App Store dağıtımı öncesinde mağaza imzaları, gizlilik metinleri
 ve gerçek cihaz kontrolleri ayrıca tamamlanmalıdır.
