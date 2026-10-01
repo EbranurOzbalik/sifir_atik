@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/models/user_profile.dart';
@@ -13,6 +14,7 @@ import 'package:sifir_atik/services/location_service.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
 import 'package:sifir_atik/widgets/listing_preview_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
+import 'package:sifir_atik/widgets/trust_score_card.dart';
 
 class ListingsPage extends StatefulWidget {
   const ListingsPage({
@@ -816,7 +818,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _OwnerCard(listing: listing),
+                _OwnerCard(listing: listing, repository: widget.repository),
                 const SizedBox(height: 24),
                 Text(
                   'Açıklama',
@@ -920,9 +922,10 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
 }
 
 class _OwnerCard extends StatelessWidget {
-  const _OwnerCard({required this.listing});
+  const _OwnerCard({required this.listing, required this.repository});
 
   final Listing listing;
+  final ListingRepository repository;
 
   @override
   Widget build(BuildContext context) {
@@ -995,6 +998,15 @@ class _OwnerCard extends StatelessWidget {
                         ],
                       ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                StreamBuilder<RatingSummary>(
+                  stream: repository.watchRatingSummary(listing.ownerId),
+                  builder: (context, snapshot) {
+                    return TrustScoreLine(
+                      summary: snapshot.data ?? const RatingSummary.empty(),
+                    );
+                  },
                 ),
               ],
             ),

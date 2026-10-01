@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sifir_atik/models/contribution_summary.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/user_profile.dart';
 import 'package:sifir_atik/services/auth_service.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
@@ -10,6 +11,7 @@ import 'package:sifir_atik/services/session_preferences.dart';
 import 'package:sifir_atik/services/user_profile_repository.dart';
 import 'package:sifir_atik/widgets/contribution_card.dart';
 import 'package:sifir_atik/widgets/responsive_layout.dart';
+import 'package:sifir_atik/widgets/trust_score_card.dart';
 
 import 'edit_profile_page.dart';
 import 'login_page.dart';
@@ -206,6 +208,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         summary:
                             contributionSnapshot.data ??
                             const ContributionSummary.empty(),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ResponsiveContent(
+                  child: StreamBuilder<RatingSummary>(
+                    stream: widget.repository.watchRatingSummary(user.uid),
+                    builder: (context, ratingSnapshot) {
+                      return TrustScoreCard(
+                        summary:
+                            ratingSnapshot.data ?? const RatingSummary.empty(),
                       );
                     },
                   ),

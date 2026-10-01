@@ -75,7 +75,10 @@ class RatingSummary {
   factory RatingSummary.fromRatings(List<ListingRating> ratings) {
     if (ratings.isEmpty) return const RatingSummary.empty();
 
-    final total = ratings.fold<int>(0, (sum, rating) => sum + rating.score);
+    final total = ratings.fold<int>(
+      0,
+      (totalScore, rating) => totalScore + rating.score,
+    );
     return RatingSummary(
       average: total / ratings.length,
       count: ratings.length,

@@ -371,6 +371,41 @@ void main() {
     expect(find.byTooltip('Kaydedilenlerden çıkar'), findsWidgets);
   });
 
+  testWidgets('listing detail shows owner trust score', (tester) async {
+    final listing = _testListing(ownerId: 'owner-1');
+    final rating = ListingRating(
+      id: 'request-1',
+      requestId: 'request-1',
+      listingId: listing.id,
+      listingTitle: listing.title,
+      ratedUserId: listing.ownerId,
+      raterUserId: 'user-2',
+      raterName: 'Zeynep',
+      score: 5,
+      comment: '',
+      createdAt: DateTime(2026, 10),
+    );
+    final repository = _FakeListingRepository(
+      listings: [listing],
+      ratings: {rating.id: rating},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Karton denemesi'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('5.0 (1 değerlendirme)'), findsOneWidget);
+  });
+
   testWidgets('saved listings page shows only saved ads', (tester) async {
     final savedListing = _testListing(ownerId: 'owner-1');
     final otherListing = _testListing(
