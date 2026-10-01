@@ -99,6 +99,25 @@ service cloud.firestore {
         );
     }
 
+    function isValidListingRating(requestId) {
+      let completedRequest = get(
+        /databases/$(database)/documents/listingRequests/$(requestId)
+      );
+
+      return completedRequest.data.status == 'completed'
+        && request.resource.data.requestId == requestId
+        && request.resource.data.listingId == completedRequest.data.listingId
+        && request.resource.data.ratedUserId == completedRequest.data.listingOwnerId
+        && request.resource.data.raterUserId == completedRequest.data.requesterId
+        && request.auth.uid == completedRequest.data.requesterId
+        && request.resource.data.score is int
+        && request.resource.data.score >= 1
+        && request.resource.data.score <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 240
+        && request.resource.data.createdAt is timestamp;
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null
         && request.auth.uid == userId;
@@ -238,6 +257,24 @@ service cloud.firestore {
         && (request.auth.uid == resource.data.requesterId
           || request.auth.uid == resource.data.listingOwnerId
           || isModerator());
+    }
+
+    match /listingRatings/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'requestId',
+          'listingId',
+          'listingTitle',
+          'ratedUserId',
+          'raterUserId',
+          'raterName',
+          'score',
+          'comment',
+          'createdAt'
+        ])
+        && isValidListingRating(requestId);
+      allow update, delete: if false;
     }
 
     match /listingReports/{reportId} {

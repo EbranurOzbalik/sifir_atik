@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:sifir_atik/models/contribution_summary.dart';
 import 'package:sifir_atik/models/listing.dart';
 import 'package:sifir_atik/models/listing_report.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/photo_storage_service.dart';
 
@@ -141,6 +142,46 @@ class ListingRepository {
 
     await for (final listings in watchMyListings(userId)) {
       yield ContributionSummary.fromListings(listings);
+    }
+  }
+
+  Stream<ListingRating?> watchRatingForRequest(String requestId) async* {
+    if (!_isFirebaseReady || requestId.isEmpty) {
+      yield null;
+      return;
+    }
+
+    try {
+      final reference = _db.collection('listingRatings').doc(requestId);
+
+      await for (final snapshot in reference.snapshots()) {
+        yield snapshot.exists ? ListingRating.fromFirestore(snapshot) : null;
+      }
+    } catch (_) {
+      yield null;
+    }
+  }
+
+  Stream<RatingSummary> watchRatingSummary(String userId) async* {
+    if (!_isFirebaseReady || userId.isEmpty) {
+      yield const RatingSummary.empty();
+      return;
+    }
+
+    try {
+      final query = _db
+          .collection('listingRatings')
+          .where('ratedUserId', isEqualTo: userId);
+
+      await for (final snapshot in query.snapshots()) {
+        final ratings = snapshot.docs
+            .map(ListingRating.fromFirestore)
+            .where((rating) => rating.score >= 1 && rating.score <= 5)
+            .toList();
+        yield RatingSummary.fromRatings(ratings);
+      }
+    } catch (_) {
+      yield const RatingSummary.empty();
     }
   }
 
@@ -322,6 +363,27 @@ class ListingRepository {
           .collection('listingRequests')
           .doc(request.id)
           .set(request.toFirestore());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> addRating(ListingRating rating) async {
+    if (!_isFirebaseReady ||
+        rating.id.isEmpty ||
+        rating.requestId != rating.id ||
+        rating.score < 1 ||
+        rating.score > 5) {
+      return false;
+    }
+
+    try {
+      final reference = _db.collection('listingRatings').doc(rating.id);
+      final existingRating = await reference.get();
+      if (existingRating.exists) return false;
+
+      await reference.set(rating.toFirestore());
       return true;
     } catch (_) {
       return false;

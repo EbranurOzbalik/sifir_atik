@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
@@ -163,6 +164,37 @@ void main() {
         expect(contribution.totalKilograms, 10);
       },
     );
+
+    test('teslimat değerlendirmesi güven puanına eklenir', () async {
+      final firestore = FakeFirebaseFirestore();
+      final repository = ListingRepository(firestore: firestore);
+      final rating = ListingRating(
+        id: 'request-1',
+        requestId: 'request-1',
+        listingId: 'listing-1',
+        listingTitle: 'Karton kutular',
+        ratedUserId: 'owner-1',
+        raterUserId: 'user-1',
+        raterName: 'Zeynep',
+        score: 5,
+        comment: 'Teslimat zamanında tamamlandı.',
+        createdAt: DateTime(2026, 10),
+      );
+
+      final isSaved = await repository.addRating(rating);
+      final savedRating = await repository
+          .watchRatingForRequest(rating.requestId)
+          .first;
+      final summary = await repository.watchRatingSummary('owner-1').first;
+      final isSavedAgain = await repository.addRating(rating);
+
+      expect(isSaved, isTrue);
+      expect(savedRating?.score, 5);
+      expect(savedRating?.comment, 'Teslimat zamanında tamamlandı.');
+      expect(summary.count, 1);
+      expect(summary.average, 5);
+      expect(isSavedAgain, isFalse);
+    });
 
     test('ilan kullanıcıya özel kaydedilip kaldırılabilir', () async {
       final firestore = FakeFirebaseFirestore();

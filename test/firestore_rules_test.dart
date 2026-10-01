@@ -102,5 +102,21 @@ void main() {
         ),
       );
     });
+
+    test(
+      'değerlendirme yalnızca tamamlanan talebin sahibi tarafından yapılır',
+      () {
+        expect(rules, contains('match /listingRatings/{requestId}'));
+        expect(rules, contains('function isValidListingRating(requestId)'));
+        expect(
+          rules,
+          contains('request.auth.uid == completedRequest.data.requesterId'),
+        );
+        expect(rules, contains("completedRequest.data.status == 'completed'"));
+        expect(rules, contains('request.resource.data.score >= 1'));
+        expect(rules, contains('request.resource.data.score <= 5'));
+        expect(rules, contains('allow update, delete: if false'));
+      },
+    );
   });
 }
