@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/services/listing_repository.dart';
 import 'package:sifir_atik/theme/app_theme.dart';
@@ -184,7 +185,11 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     return ResponsiveContent(
-                      child: _RequestCard(request: filteredRequests[index]),
+                      child: _RequestCard(
+                        request: filteredRequests[index],
+                        repository: widget.repository,
+                        currentUserId: userId,
+                      ),
                     );
                   },
                 ),
@@ -298,9 +303,15 @@ class _RequestsSummaryCard extends StatelessWidget {
 }
 
 class _RequestCard extends StatelessWidget {
-  const _RequestCard({required this.request});
+  const _RequestCard({
+    required this.request,
+    required this.repository,
+    required this.currentUserId,
+  });
 
   final ListingRequest request;
+  final ListingRepository repository;
+  final String currentUserId;
 
   String get _phoneForLink {
     final phone = request.ownerContactInfo.trim().replaceAll(
@@ -468,6 +479,12 @@ class _RequestCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _RequestRatingSection(
+              request: request,
+              repository: repository,
+              currentUserId: currentUserId,
+            ),
           ],
           if (request.status == ListingRequestStatus.accepted &&
               request.ownerContactInfo.trim().isNotEmpty) ...[
@@ -546,6 +563,229 @@ class _RequestCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _RequestRatingSection extends StatefulWidget {
+  const _RequestRatingSection({
+    required this.request,
+    required this.repository,
+    required this.currentUserId,
+  });
+
+  final ListingRequest request;
+  final ListingRepository repository;
+  final String currentUserId;
+
+  @override
+  State<_RequestRatingSection> createState() => _RequestRatingSectionState();
+}
+
+class _RequestRatingSectionState extends State<_RequestRatingSection> {
+  bool _isSaving = false;
+
+  Future<void> _rateOwner() async {
+    if (_isSaving) return;
+
+    final result = await _showRatingDialog(context);
+    if (result == null || !mounted) return;
+
+    setState(() => _isSaving = true);
+    final request = widget.request;
+    final isSaved = await widget.repository.addRating(
+      ListingRating(
+        id: request.id,
+        requestId: request.id,
+        listingId: request.listingId,
+        listingTitle: request.listingTitle,
+        ratedUserId: request.listingOwnerId,
+        raterUserId: widget.currentUserId,
+        raterName: request.requesterName,
+        score: result.score,
+        comment: result.comment,
+        createdAt: DateTime.now(),
+      ),
+    );
+
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            isSaved
+                ? 'Değerlendirmen kaydedildi.'
+                : 'Değerlendirme şu anda kaydedilemedi.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<ListingRating?>(
+      stream: widget.repository.watchRatingForRequest(widget.request.id),
+      builder: (context, snapshot) {
+        final rating = snapshot.data;
+        if (rating == null) {
+          return SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isSaving ? null : _rateOwner,
+              icon: Icon(
+                _isSaving ? Icons.hourglass_empty_rounded : Icons.star_outline,
+              ),
+              label: Text(
+                _isSaving ? 'Kaydediliyor...' : 'İlan sahibini değerlendir',
+              ),
+            ),
+          );
+        }
+
+        final colorScheme = Theme.of(context).colorScheme;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Değerlendirmen',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              _RatingStars(score: rating.score),
+              if (rating.comment.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  rating.comment,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RatingStars extends StatelessWidget {
+  const _RatingStars({required this.score});
+
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Padding(
+          padding: const EdgeInsets.only(right: 3),
+          child: Icon(
+            index < score ? Icons.star_rounded : Icons.star_border_rounded,
+            size: 22,
+            color: const Color(0xFFE09A32),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+Future<({int score, String comment})?> _showRatingDialog(BuildContext context) {
+  return showDialog<({int score, String comment})>(
+    context: context,
+    builder: (_) => const _RatingDialog(),
+  );
+}
+
+class _RatingDialog extends StatefulWidget {
+  const _RatingDialog();
+
+  @override
+  State<_RatingDialog> createState() => _RatingDialogState();
+}
+
+class _RatingDialogState extends State<_RatingDialog> {
+  final _commentController = TextEditingController();
+  int _selectedScore = 0;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Teslimatı değerlendir'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('İlan sahibiyle olan deneyimin nasıldı?'),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (index) {
+                final score = index + 1;
+                return IconButton(
+                  tooltip: '$score yıldız',
+                  onPressed: () {
+                    setState(() => _selectedScore = score);
+                  },
+                  icon: Icon(
+                    score <= _selectedScore
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    size: 34,
+                    color: const Color(0xFFE09A32),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _commentController,
+              maxLength: 240,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Kısa yorum (isteğe bağlı)',
+                hintText: 'Teslimat sürecini kısaca anlatabilirsin.',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Vazgeç'),
+        ),
+        FilledButton(
+          onPressed: _selectedScore == 0
+              ? null
+              : () {
+                  Navigator.of(context).pop((
+                    score: _selectedScore,
+                    comment: _commentController.text.trim(),
+                  ));
+                },
+          child: const Text('Kaydet'),
+        ),
+      ],
     );
   }
 }

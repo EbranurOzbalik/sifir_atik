@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sifir_atik/data/waste_categories.dart';
 import 'package:sifir_atik/main.dart';
 import 'package:sifir_atik/models/listing.dart';
+import 'package:sifir_atik/models/listing_rating.dart';
 import 'package:sifir_atik/models/listing_report.dart';
 import 'package:sifir_atik/models/listing_request.dart';
 import 'package:sifir_atik/screens/create_listing_page.dart';
@@ -592,6 +593,41 @@ void main() {
     expect(find.text("WhatsApp'tan yaz"), findsNothing);
   });
 
+  testWidgets('completed request can be rated once', (tester) async {
+    final repository = _FakeListingRepository(
+      requests: [
+        _testRequest('request-completed', ListingRequestStatus.completed),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyRequestsPage(
+          repository: repository,
+          currentUserId: 'user-1',
+          isFirebaseReady: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('İlan sahibini değerlendir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('5 yıldız'));
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Kısa yorum (isteğe bağlı)'),
+      'Teslimat zamanında tamamlandı.',
+    );
+    await tester.tap(find.text('Kaydet'));
+    await tester.pumpAndSettle();
+
+    expect(repository.addRatingCount, 1);
+    expect(find.text('Değerlendirmen kaydedildi.'), findsOneWidget);
+    expect(find.text('Değerlendirmen'), findsOneWidget);
+    expect(find.text('Teslimat zamanında tamamlandı.'), findsOneWidget);
+    expect(find.text('İlan sahibini değerlendir'), findsNothing);
+  });
+
   testWidgets('owner can complete a reserved listing delivery', (tester) async {
     final request = _testRequest(
       'request-accepted',
@@ -759,18 +795,22 @@ class _FakeListingRepository extends ListingRepository {
     this.requests = const [],
     this.reports = const [],
     this.shouldSaveRequest = true,
+    Map<String, ListingRating> ratings = const {},
     Set<String> savedListingIds = const {},
-  }) : savedListingIds = {...savedListingIds};
+  }) : ratings = {...ratings},
+       savedListingIds = {...savedListingIds};
 
   final List<Listing> listings;
   final List<ListingRequest> requests;
   final List<ListingReport> reports;
   final bool shouldSaveRequest;
+  final Map<String, ListingRating> ratings;
   final Set<String> savedListingIds;
   int addRequestCount = 0;
   int addReportCount = 0;
   int setListingSavedCount = 0;
   int completeListingCount = 0;
+  int addRatingCount = 0;
   ListingReport? lastReport;
 
   @override
@@ -801,6 +841,20 @@ class _FakeListingRepository extends ListingRepository {
   Stream<List<ListingReport>> watchOpenReports() => Stream.value(reports);
 
   @override
+  Stream<ListingRating?> watchRatingForRequest(String requestId) {
+    return Stream.value(ratings[requestId]);
+  }
+
+  @override
+  Stream<RatingSummary> watchRatingSummary(String userId) {
+    return Stream.value(
+      RatingSummary.fromRatings(
+        ratings.values.where((rating) => rating.ratedUserId == userId).toList(),
+      ),
+    );
+  }
+
+  @override
   Stream<Set<String>> watchSavedListingIds(String userId) {
     return Stream.value({...savedListingIds});
   }
@@ -815,6 +869,14 @@ class _FakeListingRepository extends ListingRepository {
   Future<bool> addReport(ListingReport report) async {
     addReportCount += 1;
     lastReport = report;
+    return true;
+  }
+
+  @override
+  Future<bool> addRating(ListingRating rating) async {
+    addRatingCount += 1;
+    if (ratings.containsKey(rating.requestId)) return false;
+    ratings[rating.requestId] = rating;
     return true;
   }
 
